@@ -16,28 +16,34 @@ struct MainTabView: View {
         }
         .tag(0)
 
-      SalesView()
-        .environmentObject(salesVM)
-        .environmentObject(inventoryVM)
-        .tabItem {
-          Label("Sales", systemImage: "tag.fill")
-        }
-        .tag(1)
+      NavigationStack {
+        SalesView()
+          .environmentObject(salesVM)
+          .environmentObject(inventoryVM)
+      }
+      .tabItem {
+        Label("Sales", systemImage: "tag.fill")
+      }
+      .tag(1)
 
-      InventoryView()
-        .environmentObject(inventoryVM)
-        .tabItem {
-          Label("Inventory", systemImage: "cube.box.fill")
-        }
-        .tag(2)
+      NavigationStack {
+        InventoryView()
+          .environmentObject(inventoryVM)
+      }
+      .tabItem {
+        Label("Inventory", systemImage: "cube.box.fill")
+      }
+      .tag(2)
 
-      CostsView()
-        .environmentObject(costsVM)
-        .tabItem {
-          Label("Costs", systemImage: "arrow.down.circle.fill")
-        }
-        .tag(3)
+      NavigationStack {
+        CostsView()
+          .environmentObject(costsVM)
+      }
+      .tabItem {
+        Label("Costs", systemImage: "arrow.down.circle.fill")
+      }
+      .tag(3)
     }
-    .accentColor(.marketBlue)
+    .tint(.white)
   }
 }

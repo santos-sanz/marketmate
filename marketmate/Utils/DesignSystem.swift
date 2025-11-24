@@ -3,8 +3,8 @@ import SwiftUI
 // MARK: - Colors
 extension Color {
   // Primary Colors
-  static let marketBlue = Color(hex: "007AFF")
-  static let marketDarkBlue = Color(hex: "0055B3")
+  static let marketBlue = Color(hex: "0066CC") // Slightly darker than 007AFF
+  static let marketDarkBlue = Color(hex: "004499") // Slightly darker than 0055B3
   static let marketLightBlue = Color(hex: "5AC8FA")
 
   // Semantic Colors
@@ -146,6 +146,18 @@ extension View {
       .padding(.horizontal, Spacing.md)
       .padding(.top, 10)
       .padding(.bottom, Spacing.xs)
+  }
+
+  // Placeholder Helper
+  func placeholder<Content: View>(
+    when shouldShow: Bool,
+    alignment: Alignment = .leading,
+    @ViewBuilder placeholder: () -> Content
+  ) -> some View {
+    ZStack(alignment: alignment) {
+      placeholder().opacity(shouldShow ? 1 : 0)
+      self
+    }
   }
 }
 

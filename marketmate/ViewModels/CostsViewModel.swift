@@ -12,11 +12,13 @@ class CostsViewModel: ObservableObject {
   private let client = SupabaseService.shared.client
 
   func fetchCosts() async {
+    print("💰 [CostsVM] Fetching costs...")
     isLoading = true
     errorMessage = nil
 
     if let cachedCosts = OfflineService.shared.load([Cost].self, from: "costs.json") {
       self.costs = cachedCosts
+      print("💰 [CostsVM] Loaded \(cachedCosts.count) costs from cache")
     }
 
     do {
@@ -30,24 +32,32 @@ class CostsViewModel: ObservableObject {
 
       self.costs = costs
       OfflineService.shared.save(costs, to: "costs.json")
+      print("✅ [CostsVM] Fetched \(costs.count) costs successfully")
     } catch {
       errorMessage = "Error fetching costs: \(error.localizedDescription)"
+      print("❌ [CostsVM] Error fetching costs: \(error)")
     }
     isLoading = false
   }
 
   func fetchCategories() async {
+    print("💰 [CostsVM] Fetching categories...")
     do {
       let categories: [CostCategory] = try await client.from("cost_categories").select().execute()
         .value
       self.categories = categories
+      print("✅ [CostsVM] Fetched \(categories.count) categories successfully")
     } catch {
-      print("Error fetching categories: \(error)")
+      print("❌ [CostsVM] Error fetching categories: \(error)")
     }
   }
 
   func addCost(description: String, amount: Double, category: String?, isRecurrent: Bool) async {
-    guard let userId = client.auth.currentUser?.id else { return }
+    print("💰 [CostsVM] Adding cost: \(description)")
+    guard let userId = client.auth.currentUser?.id else {
+      print("❌ [CostsVM] No user ID found")
+      return
+    }
     let newCost = Cost(
       id: UUID(),
       userId: userId,
@@ -60,13 +70,16 @@ class CostsViewModel: ObservableObject {
     )
     do {
       try await client.from("costs").insert(newCost).execute()
+      print("✅ [CostsVM] Cost added successfully")
       await fetchCosts()
     } catch {
       self.errorMessage = "Error adding cost: \(error.localizedDescription)"
+      print("❌ [CostsVM] Error adding cost: \(error)")
     }
   }
 
   func updateCost(_ cost: Cost) async {
+    print("💰 [CostsVM] Updating cost: \(cost.description)")
     do {
       let _: Cost =
         try await client
@@ -76,20 +89,23 @@ class CostsViewModel: ObservableObject {
         .single()
         .execute()
         .value
+      print("✅ [CostsVM] Cost updated successfully")
       await fetchCosts()
     } catch {
       errorMessage = "Error updating cost: \(error.localizedDescription)"
-      print("Error updating cost: \(error)")
+      print("❌ [CostsVM] Error updating cost: \(error)")
     }
   }
 
   func deleteCost(id: UUID) async {
+    print("💰 [CostsVM] Deleting cost: \(id)")
     do {
       try await client.from("costs").delete().eq("id", value: id).execute()
+      print("✅ [CostsVM] Cost deleted successfully")
       await fetchCosts()
     } catch {
       errorMessage = "Error deleting cost: \(error.localizedDescription)"
-      print("Error deleting cost: \(error)")
+      print("❌ [CostsVM] Error deleting cost: \(error)")
     }
   }
 }

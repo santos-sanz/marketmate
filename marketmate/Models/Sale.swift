@@ -4,21 +4,25 @@ struct Sale: Codable, Identifiable, Hashable {
   let id: UUID
   let userId: UUID
   var marketId: UUID?
+  var marketLocation: String?
   var totalAmount: Double
   var paymentMethod: String
   var source: String?
   var notes: String?
   let createdAt: Date
+  var items: [SaleItem]?
 
   enum CodingKeys: String, CodingKey {
     case id
     case userId = "user_id"
     case marketId = "market_id"
+    case marketLocation = "location"
     case totalAmount = "total_amount"
     case paymentMethod = "payment_method"
     case source
     case notes
     case createdAt = "created_at"
+    case items = "sale_items"
   }
 }
 

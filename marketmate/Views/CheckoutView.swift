@@ -19,110 +19,125 @@ struct CheckoutView: View {
   let paymentMethods = ["Cash", "Card", "Transfer"]
 
   var body: some View {
-    NavigationView {
-      ZStack {
-        Color.clear.revolutBackground()
+    ZStack {
+      LinearGradient(
+        colors: [
+          Color.marketBlue,
+          Color.marketDarkBlue,
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+      )
+      .ignoresSafeArea()
 
-        VStack {
-          List {
-            Section(header: Text("Items").foregroundColor(.marketTextSecondary)) {
-              ForEach(salesVM.cartItems) { item in
-                HStack {
-                  Text("\(item.quantity) x \(item.product.name)")
-                    .foregroundColor(.white)
-                  Spacer()
-                  Text(
-                    "\(profileVM.selectedCurrency) \(String(format: "%.2f", item.product.price * Double(item.quantity)))"
-                  )
-                  .foregroundColor(.white)
-                }
-                .listRowBackground(Color.marketCard)
-              }
-            }
-
-            Section(header: Text("Payment").foregroundColor(.marketTextSecondary)) {
-              Picker("Method", selection: $paymentMethod) {
-                ForEach(paymentMethods, id: \.self) { method in
-                  Text(method).tag(method)
-                }
-              }
-              .pickerStyle(SegmentedPickerStyle())
-              .listRowBackground(Color.marketCard)
-
-              if paymentMethod == "Cash" {
-                HStack {
-                  Text("Cash Received")
-                    .foregroundColor(.white)
-                  Spacer()
-                  TextField("0.00", text: $cashReceived)
-                    .keyboardType(.decimalPad)
-                    .multilineTextAlignment(.trailing)
-                    .foregroundColor(.white)
-                }
-                .listRowBackground(Color.marketCard)
-
-                if !cashReceived.isEmpty {
-                  HStack {
-                    Text("Change Due")
-                      .font(Typography.headline)
-                      .foregroundColor(.marketGreen)
-                    Spacer()
-                    Text("\(profileVM.selectedCurrency) \(String(format: "%.2f", changeDue))")
-                      .font(Typography.title3)
-                      .fontWeight(.bold)
-                      .foregroundColor(.marketGreen)
-                  }
-                  .listRowBackground(Color.marketCard)
-                }
-              }
-
-              TextField("Notes", text: $notes)
-                .listRowBackground(Color.marketCard)
-                .foregroundColor(.white)
-            }
-
-            Section {
+      VStack {
+        List {
+          Section(header: Text("Items").foregroundColor(.marketTextSecondary)) {
+            ForEach(salesVM.cartItems) { item in
               HStack {
-                Text("Total to Pay")
-                  .font(Typography.title3)
+                Text("\(item.quantity) x \(item.product.name)")
                   .foregroundColor(.white)
                 Spacer()
-                Text("\(profileVM.selectedCurrency) \(String(format: "%.2f", salesVM.cartTotal))")
-                  .font(Typography.display)
-                  .fontWeight(.bold)
-                  .foregroundColor(.white)
+                Text(
+                  "\(profileVM.currencySymbol) \(String(format: "%.2f", item.product.price * Double(item.quantity)))"
+                )
+                .foregroundColor(.white)
               }
               .listRowBackground(Color.marketCard)
             }
           }
-          .scrollContentBackground(.hidden)
 
-          Button(action: confirmSale) {
-            Text("Confirm Sale")
-              .font(Typography.headline)
-              .fontWeight(.semibold)
+          Section(header: Text("Payment").foregroundColor(.marketTextSecondary)) {
+            Picker("Method", selection: $paymentMethod) {
+              ForEach(paymentMethods, id: \.self) { method in
+                Text(method).tag(method)
+              }
+            }
+            .pickerStyle(SegmentedPickerStyle())
+            .listRowBackground(Color.marketCard)
+
+            if paymentMethod == "Cash" {
+              HStack {
+                Text("Cash Received")
+                  .foregroundColor(.white)
+                Spacer()
+                TextField("0.00", text: $cashReceived)
+                  .keyboardType(.decimalPad)
+                  .multilineTextAlignment(.trailing)
+                  .foregroundColor(.white)
+              }
+              .listRowBackground(Color.marketCard)
+
+              if !cashReceived.isEmpty {
+                HStack {
+                  Text("Change Due")
+                    .font(Typography.headline)
+                    .foregroundColor(.marketGreen)
+                  Spacer()
+                  Text("\(profileVM.currencySymbol) \(String(format: "%.2f", changeDue))")
+                    .font(Typography.title3)
+                    .fontWeight(.bold)
+                    .foregroundColor(.marketGreen)
+                }
+                .listRowBackground(Color.marketCard)
+              }
+            }
+
+            TextField("Notes", text: $notes)
+              .listRowBackground(Color.marketCard)
               .foregroundColor(.white)
-              .frame(maxWidth: .infinity)
-              .padding(Spacing.md)
-              .background(Color.marketBlue)
-              .cornerRadius(CornerRadius.xl)
           }
-          .padding(Spacing.md)
-        }
-      }
-      .navigationTitle("Checkout")
-      .toolbar {
-        ToolbarItem(placement: .cancellationAction) {
-          Button("Cancel") {
-            presentationMode.wrappedValue.dismiss()
+
+          Section {
+            HStack {
+              Text("Total to Pay")
+                .font(Typography.title2)
+                .foregroundColor(.white)
+              Spacer()
+              Text("\(profileVM.currencySymbol) \(String(format: "%.2f", salesVM.cartTotal))")
+                .font(.system(size: 40, weight: .bold))
+                .foregroundColor(.white)
+            }
+            .padding(.vertical, 8)
+            .listRowBackground(Color.marketCard)
           }
-          .foregroundColor(.marketTextSecondary)
         }
+        .scrollContentBackground(.hidden)
+
+        Button(action: confirmSale) {
+          Text("Confirm Sale")
+            .font(Typography.headline)
+            .fontWeight(.semibold)
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding(Spacing.md)
+            .background(Color.marketBlue)
+            .cornerRadius(CornerRadius.xl)
+        }
+        .padding(Spacing.md)
       }
+    }
+    .navigationTitle("Checkout")
+    .onAppear {
+      print("🛒 [CheckoutView] onAppear called")
+      print("🛒 [CheckoutView] Cart items: \(salesVM.cartItems.count)")
+      print("🛒 [CheckoutView] Cart total: \(salesVM.cartTotal)")
+      print("🛒 [CheckoutView] Active market: \(marketSession.activeMarket != nil ? "Yes" : "No")")
+      if let error = salesVM.errorMessage {
+        print("❌ [CheckoutView] SalesVM error: \(error)")
+      }
+    }
+    .alert("Error", isPresented: .constant(salesVM.errorMessage != nil)) {
+      Button("OK") {
+        salesVM.errorMessage = nil
+      }
+    } message: {
+      Text(salesVM.errorMessage ?? "")
     }
   }
 
   private func confirmSale() {
+    print("Confirm sale pressed. Payment Method: \(paymentMethod), Total: \(salesVM.cartTotal)")
     let items = salesVM.cartItems.map { cartItem in
       SaleItem(
         id: UUID(),  // Placeholder, handled in VM
@@ -142,7 +157,8 @@ struct CheckoutView: View {
         paymentMethod: paymentMethod,
         source: source,
         notes: notes.isEmpty ? nil : notes,
-        marketId: marketSession.activeMarket?.id
+        marketId: marketSession.activeMarket?.id,
+        marketLocation: marketSession.activeMarket?.location
       )
       salesVM.clearCart()
       presentationMode.wrappedValue.dismiss()

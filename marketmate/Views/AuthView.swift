@@ -6,13 +6,13 @@ struct AuthView: View {
 
   var body: some View {
     ZStack {
-      Color.marketBlack.edgesIgnoringSafeArea(.all)
+      Color.clear.revolutBackground()
 
       VStack(spacing: 24) {
         // Logo or Title
         Text("MarketMate")
           .font(.system(size: 40, weight: .bold, design: .rounded))
-          .foregroundColor(.marketGreen)
+          .foregroundColor(.white)
           .padding(.top, 60)
 
         Text(isSignUp ? "Create Account" : "Welcome Back")
@@ -20,7 +20,10 @@ struct AuthView: View {
           .foregroundColor(.white)
 
         VStack(spacing: 16) {
-          TextField("Email", text: $authVM.email)
+          TextField("", text: $authVM.email)
+            .placeholder(when: authVM.email.isEmpty) {
+              Text("Email").foregroundColor(Color.white.opacity(0.6))
+            }
             .textContentType(.emailAddress)
             .keyboardType(.emailAddress)
             .autocapitalization(.none)
@@ -29,7 +32,10 @@ struct AuthView: View {
             .cornerRadius(12)
             .foregroundColor(.white)
 
-          SecureField("Password", text: $authVM.password)
+          SecureField("", text: $authVM.password)
+            .placeholder(when: authVM.password.isEmpty) {
+              Text("Password").foregroundColor(Color.white.opacity(0.6))
+            }
             .textContentType(isSignUp ? .newPassword : .password)
             .padding()
             .background(Color.marketCard)
@@ -55,21 +61,24 @@ struct AuthView: View {
         }) {
           if authVM.isLoading {
             ProgressView()
-              .progressViewStyle(CircularProgressViewStyle(tint: .marketBlack))
+              .progressViewStyle(CircularProgressViewStyle(tint: .black))
           } else {
             Text(isSignUp ? "Sign Up" : "Log In")
               .font(.headline)
-              .foregroundColor(.marketBlack)
+              .foregroundColor(.black)
           }
         }
-        .primaryButtonStyle()
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(Color.white)
+        .cornerRadius(CornerRadius.xl)
         .padding(.horizontal)
 
         Button(action: {
           isSignUp.toggle()
         }) {
           Text(isSignUp ? "Already have an account? Log In" : "Don't have an account? Sign Up")
-            .foregroundColor(.marketGreen)
+            .foregroundColor(.white)
         }
 
         Spacer()

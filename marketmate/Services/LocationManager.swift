@@ -12,6 +12,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     super.init()
     locationManager.delegate = self
     locationManager.desiredAccuracy = kCLLocationAccuracyBest
+    authorizationStatus = locationManager.authorizationStatus
   }
 
   func requestPermission() {
@@ -37,5 +38,19 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
 
   func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
     print("Location manager failed with error: \(error.localizedDescription)")
+  }
+
+  func reverseGeocode(location: CLLocation) async -> String? {
+    let geocoder = CLGeocoder()
+    do {
+      let placemarks = try await geocoder.reverseGeocodeLocation(location)
+      if let placemark = placemarks.first, let city = placemark.locality {
+        return city
+      }
+      return nil
+    } catch {
+      print("Reverse geocoding failed: \(error.localizedDescription)")
+      return nil
+    }
   }
 }

@@ -36,10 +36,10 @@ struct ReportsView: View {
               VStack(spacing: 16) {
                 SummaryCard(
                   title: "Total Sales", amount: reportsVM.totalSales, color: .marketGreen,
-                  icon: "arrow.up.circle.fill", currency: profileVM.selectedCurrency)
+                  icon: "tag.fill", currency: profileVM.currencySymbol)
                 SummaryCard(
                   title: "Total Costs", amount: reportsVM.totalCosts, color: .red,
-                  icon: "arrow.down.circle.fill", currency: profileVM.selectedCurrency)
+                  icon: "arrow.down.circle.fill", currency: profileVM.currencySymbol)
               }
               .padding(.horizontal)
 
@@ -47,7 +47,7 @@ struct ReportsView: View {
                 SummaryCard(
                   title: "Net Profit", amount: reportsVM.netProfit,
                   color: reportsVM.netProfit >= 0 ? .marketBlue : .orange, icon: "banknote.fill",
-                  currency: profileVM.selectedCurrency)
+                  currency: profileVM.currencySymbol)
               }
               .padding(.horizontal)
               // Charts
@@ -72,7 +72,7 @@ struct ReportsView: View {
                       .foregroundStyle(Color.marketTextSecondary)
                     AxisValueLabel {
                       if let doubleValue = value.as(Double.self) {
-                        Text("\(profileVM.selectedCurrency) \(Int(doubleValue))")
+                        Text("\(profileVM.currencySymbol) \(Int(doubleValue))")
                           .foregroundColor(.white.opacity(0.7))
                       }
                     }

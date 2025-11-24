@@ -9,6 +9,7 @@ struct Market: Codable, Identifiable, Hashable {
   var longitude: Double?
   var date: Date
   var isOpen: Bool
+  var endTime: Date?
   let createdAt: Date
 
   enum CodingKeys: String, CodingKey {
@@ -20,6 +21,7 @@ struct Market: Codable, Identifiable, Hashable {
     case longitude
     case date
     case isOpen = "is_open"
+    case endTime = "end_time"
     case createdAt = "created_at"
   }
 }

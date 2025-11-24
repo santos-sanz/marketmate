@@ -22,32 +22,34 @@ struct marketmateApp: App {
     UINavigationBar.appearance().compactAppearance = appearance
     UINavigationBar.appearance().scrollEdgeAppearance = appearance
 
-    // Configure TabBar with glassmorphism effect
+    // Configure TabBar with darker background and white icons
     let tabAppearance = UITabBarAppearance()
     tabAppearance.configureWithTransparentBackground()
-    tabAppearance.backgroundEffect = UIBlurEffect(style: .systemUltraThinMaterialLight)
-    tabAppearance.backgroundColor = UIColor.white.withAlphaComponent(0.95)  // More opaque
-
-    // Icon colors - higher contrast
-    tabAppearance.stackedLayoutAppearance.selected.iconColor = UIColor(Color.marketBlue)
-    tabAppearance.stackedLayoutAppearance.normal.iconColor = UIColor.lightGray
-
-    // Text colors - higher contrast
+    
+    // Darker background for better contrast with white icons
+    tabAppearance.backgroundColor = UIColor(white: 0.0, alpha: 0.3)  // Dark semi-transparent background
+    
+    // Icon colors - Pure White for both selected and unselected
+    tabAppearance.stackedLayoutAppearance.selected.iconColor = UIColor.white
+    tabAppearance.stackedLayoutAppearance.normal.iconColor = UIColor.white
+    
+    // Text colors - White
     tabAppearance.stackedLayoutAppearance.selected.titleTextAttributes = [
-      .foregroundColor: UIColor(Color.marketBlue)
+      .foregroundColor: UIColor.white
     ]
     tabAppearance.stackedLayoutAppearance.normal.titleTextAttributes = [
-      .foregroundColor: UIColor.lightGray
+      .foregroundColor: UIColor.white.withAlphaComponent(0.7)
     ]
 
     UITabBar.appearance().standardAppearance = tabAppearance
     UITabBar.appearance().scrollEdgeAppearance = tabAppearance
+    
+    // Explicitly set tint color to white to prevent any system overrides
+    UITabBar.appearance().tintColor = UIColor.white
+    UITabBar.appearance().unselectedItemTintColor = UIColor.white
 
-    // Enhanced shadow for better separation
-    UITabBar.appearance().layer.shadowColor = UIColor.black.cgColor
-    UITabBar.appearance().layer.shadowOffset = CGSize(width: 0, height: -3)
-    UITabBar.appearance().layer.shadowRadius = 10
-    UITabBar.appearance().layer.shadowOpacity = 0.15
+    // Remove shadow to keep it clean
+    UITabBar.appearance().layer.shadowColor = UIColor.clear.cgColor
   }
 
   var body: some Scene {

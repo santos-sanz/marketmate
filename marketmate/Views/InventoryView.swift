@@ -15,115 +15,112 @@ struct InventoryView: View {
   }
 
   var body: some View {
-    NavigationView {
-      ZStack {
-        // Gradient Background
-        Color.clear.revolutBackground()
+    ZStack {
+      // Gradient Background
+      Color.clear.revolutBackground()
 
-        VStack(spacing: 0) {
-          // Header (Profile, Search, Reports)
-          HStack(spacing: 12) {
-            Button(action: {}) {
-              Image(systemName: "person.crop.circle.fill")
-                .resizable()
-                .frame(width: 40, height: 40)
-                .foregroundColor(.white.opacity(0.8))
-            }
+      VStack(spacing: 0) {
+        // Header (Profile, Search, Reports)
+        HStack(spacing: 12) {
+          Button(action: {}) {
+            Image(systemName: "person.crop.circle.fill")
+              .resizable()
+              .frame(width: 40, height: 40)
+              .foregroundColor(.white.opacity(0.8))
+          }
 
-            // Search Bar
-            HStack {
-              Image(systemName: "magnifyingglass")
-                .foregroundColor(.white.opacity(0.6))
-              TextField("Search", text: $searchText)
-                .foregroundColor(.white)
-                .accentColor(.white)
-            }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 12)
-            .background(Color.white.opacity(0.2))
-            .cornerRadius(20)
+          // Search Bar
+          HStack {
+            Image(systemName: "magnifyingglass")
+              .foregroundColor(.white.opacity(0.8))
+            TextField("Search", text: $searchText)
+              .foregroundColor(.white)
+              .accentColor(.white)
+              .placeholder(when: searchText.isEmpty) {
+                Text("Search").foregroundColor(.white)
+              }
+          }
+          .padding(.vertical, 8)
+          .padding(.horizontal, 12)
+          .background(Color.white.opacity(0.3))
+          .cornerRadius(20)
 
-            Button(action: {}) {
-              Image(systemName: "chart.bar.xaxis")
-                .foregroundColor(.white)
-                .font(Typography.title3)
+          Button(action: {}) {
+            Image(systemName: "chart.bar.xaxis")
+              .foregroundColor(.white)
+              .font(Typography.title3)
+          }
+        }
+        .padding(.horizontal, Spacing.md)
+        .padding(.top, 10)
+        .padding(.bottom, Spacing.xs)
+
+        // Content
+        if inventoryVM.isLoading {
+          ProgressView()
+            .progressViewStyle(CircularProgressViewStyle(tint: .marketBlue))
+        } else if inventoryVM.products.isEmpty {
+          VStack(spacing: 20) {
+            Image(systemName: "cube.box")
+              .font(.system(size: 60))
+              .foregroundColor(.marketTextSecondary)
+            Text("No products yet")
+              .font(.title2)
+              .foregroundColor(.marketTextSecondary)
+            Button(action: { showingAddProduct = true }) {
+              Text("Add your first product")
+                .primaryButtonStyle()
+                .frame(width: 200)
             }
           }
-          .padding(.horizontal, Spacing.md)
-          .padding(.top, 10)
-          .padding(.bottom, Spacing.xs)
-
-          // Content
-          if inventoryVM.isLoading {
-            ProgressView()
-              .progressViewStyle(CircularProgressViewStyle(tint: .marketBlue))
-          } else if inventoryVM.products.isEmpty {
-            VStack(spacing: 20) {
-              Image(systemName: "cube.box")
-                .font(.system(size: 60))
-                .foregroundColor(.marketTextSecondary)
-              Text("No products yet")
-                .font(.title2)
-                .foregroundColor(.marketTextSecondary)
-              Button(action: { showingAddProduct = true }) {
-                Text("Add your first product")
-                  .primaryButtonStyle()
-                  .frame(width: 200)
-              }
-            }
-          } else {
-            List {
-              ForEach(filteredProducts) { product in
+        } else {
+          List {
+            ForEach(filteredProducts) { product in
+              NavigationLink(
+                destination: ProductDetailView(product: product).environmentObject(inventoryVM)
+              ) {
                 ProductRowView(product: product)
-                  .listRowBackground(Color.marketCard)
-                  .listRowSeparator(.hidden)
-                  .padding(.vertical, 4)
-                  .onTapGesture {
-                    selectedProduct = product
-                  }
               }
-              .onDelete { indexSet in
-                Task {
-                  for index in indexSet {
-                    await inventoryVM.deleteProduct(id: filteredProducts[index].id)
-                  }
+              .listRowBackground(Color.marketCard)
+              .listRowSeparator(.hidden)
+              .padding(.vertical, 4)
+            }
+            .onDelete { indexSet in
+              Task {
+                for index in indexSet {
+                  await inventoryVM.deleteProduct(id: filteredProducts[index].id)
                 }
               }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .background(Color.clear)
-            .animation(.default, value: filteredProducts)
           }
+          .listStyle(.plain)
+          .scrollContentBackground(.hidden)
+          .background(Color.clear)
+        }
 
-          // Floating Action Button
-          VStack {
+        // Floating Action Button
+        VStack {
+          Spacer()
+          HStack {
             Spacer()
-            HStack {
-              Spacer()
-              Button(action: { showingAddProduct = true }) {
-                Image(systemName: "plus")
-                  .font(.title)
-                  .foregroundColor(.white)
-                  .frame(width: 60, height: 60)
-                  .background(Color.marketBlue)
-                  .clipShape(Circle())
-                  .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 4)
-              }
-              .padding()
+            Button(action: { showingAddProduct = true }) {
+              Image(systemName: "plus")
+                .font(.title)
+                .foregroundColor(.white)
+                .frame(width: 60, height: 60)
+                .background(Color.marketBlue)
+                .clipShape(Circle())
+                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 4)
             }
+            .padding()
           }
         }
       }
-      .navigationBarHidden(true)
-      .sheet(isPresented: $showingAddProduct) {
-        AddProductView()
-          .environmentObject(inventoryVM)
-      }
-      .sheet(item: $selectedProduct) { product in
-        ProductDetailView(product: product)
-          .environmentObject(inventoryVM)
-      }
+    }
+    .navigationBarHidden(true)
+    .navigationDestination(isPresented: $showingAddProduct) {
+      AddProductView()
+        .environmentObject(inventoryVM)
     }
     .onAppear {
       Task {
@@ -154,7 +151,7 @@ struct ProductRowView: View {
       Spacer()
 
       VStack(alignment: .trailing) {
-        Text("\(profileVM.selectedCurrency) \(String(format: "%.2f", product.price))")
+        Text("\(profileVM.currencySymbol) \(String(format: "%.2f", product.price))")
           .font(.headline)
           .foregroundColor(.white)
 

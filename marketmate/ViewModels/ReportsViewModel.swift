@@ -27,6 +27,7 @@ class ReportsViewModel: ObservableObject {
   }
 
   func fetchData() async {
+    print("📊 [ReportsVM] Fetching reports data for \(selectedTimeRange.rawValue)...")
     isLoading = true
 
     // Calculate start date based on selectedTimeRange
@@ -73,6 +74,10 @@ class ReportsViewModel: ObservableObject {
       self.totalCosts = costs.reduce(0) { $0 + $1.amount }
       self.netProfit = totalSales - totalCosts
 
+      print(
+        "📊 [ReportsVM] Fetched \(sales.count) sales, \(costs.count) costs. Total: $\(totalSales), Net: $\(netProfit)"
+      )
+
       // Group sales by date for the chart
       let groupedSales = Dictionary(grouping: sales) { sale -> Date in
         let components = calendar.dateComponents([.year, .month, .day], from: sale.createdAt)
@@ -84,7 +89,7 @@ class ReportsViewModel: ObservableObject {
       }.sorted { $0.date < $1.date }
 
     } catch {
-      print("Error fetching reports data: \(error)")
+      print("❌ [ReportsVM] Error fetching reports data: \(error)")
     }
 
     isLoading = false
