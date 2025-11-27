@@ -1,4 +1,5 @@
 import CoreLocation
+import Supabase
 import SwiftUI
 
 struct SalesView: View {
@@ -9,8 +10,13 @@ struct SalesView: View {
   @EnvironmentObject var profileVM: ProfileViewModel
   @State private var showingCheckout = false
   @State private var showingStartMarket = false
+  @State private var showingCustomAmount = false
+  @State private var customAmount = ""
+  @State private var customDescription = ""
   @State private var marketLocation = ""
   @State private var searchText = ""
+  @State private var activities: [Activity] = []
+  private let client = SupabaseService.shared.client
 
   var filteredProducts: [Product] {
     if searchText.isEmpty {
@@ -37,13 +43,13 @@ struct SalesView: View {
             Image(systemName: "person.crop.circle.fill")
               .resizable()
               .frame(width: 40, height: 40)
-              .foregroundColor(.white.opacity(0.8))
+              .foregroundColor(.marketTextSecondary)
           }
 
           // Search Bar
           HStack {
             Image(systemName: "magnifyingglass")
-              .foregroundColor(.white.opacity(0.8))
+              .foregroundColor(.marketTextSecondary)
             TextField("Search", text: $searchText)
               .foregroundColor(.white)
               .accentColor(.white)
@@ -51,10 +57,7 @@ struct SalesView: View {
                 Text("Search").foregroundColor(.white)
               }
           }
-          .padding(.vertical, 8)
-          .padding(.horizontal, 12)
-          .background(Color.white.opacity(0.3))
-          .cornerRadius(20)
+          .searchBarStyle()
 
           Button(action: {
             locationManager.requestPermission()
@@ -63,7 +66,7 @@ struct SalesView: View {
           }) {
             Image(systemName: "tent.fill")
               .foregroundColor(.white)
-              .font(.system(size: 24))
+              .font(Typography.title2)
           }
         }
         .padding(.horizontal)
@@ -106,7 +109,7 @@ struct SalesView: View {
             ) {  // 3 columns for compactness
               // Custom Amount Button
               Button(action: {
-                // TODO: Handle custom amount logic
+                showingCustomAmount = true
               }) {
                 VStack(spacing: 4) {
                   Image(systemName: "keyboard")
@@ -133,34 +136,18 @@ struct SalesView: View {
             }
             .padding(.horizontal, Spacing.sm)
 
-            // Recent Sales Section
+            // Recent Activity Section (Sales Only)
             VStack(alignment: .leading, spacing: Spacing.sm) {
-              Text("Recent Sales")
+              Text("Recent Activity")
                 .font(Typography.headline)
                 .foregroundColor(.white)
                 .padding(.horizontal, Spacing.sm)
 
-              ForEach(salesVM.sales.prefix(5)) { sale in
-                HStack {
-                  VStack(alignment: .leading) {
-                    Text("Sale")
-                      .font(Typography.subheadline)
-                      .foregroundColor(.white)
-                    if let location = sale.marketLocation {
-                      Text(location)
-                        .font(Typography.caption1)
-                        .foregroundColor(.white.opacity(0.7))
-                    }
-                  }
-                  Spacer()
-                  Text("\(profileVM.currencySymbol) \(String(format: "%.2f", sale.totalAmount))")
-                    .font(Typography.subheadline)
-                    .bold()
-                    .foregroundColor(.white)
-                }
-                .padding()
-                .background(Color.white.opacity(0.1))
-                .cornerRadius(CornerRadius.sm)
+              ForEach(activities.filter { $0.type == .sale }.prefix(5)) { activity in
+                ActivityRow(
+                  activity: activity,
+                  currency: profileVM.currencySymbol
+                )
               }
             }
             .padding(.horizontal, Spacing.sm)
@@ -230,6 +217,96 @@ struct SalesView: View {
         )
       }
     }
+    .sheet(isPresented: $showingCustomAmount) {
+      ZStack {
+        Color.marketBlue.edgesIgnoringSafeArea(.all)
+
+        VStack(spacing: 24) {
+          Text("Add Custom Amount")
+            .font(Typography.title3)
+            .foregroundColor(.white)
+            .bold()
+
+          VStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+              Text("Amount")
+                .font(Typography.caption1)
+                .foregroundColor(.marketTextSecondary)
+
+              HStack {
+                Text(profileVM.currencySymbol)
+                  .foregroundColor(.white)
+                  .font(.title2)
+                TextField("\(profileVM.currencySymbol) 0.00", text: $customAmount)
+                  .currencyInput(text: $customAmount)
+                  .foregroundColor(.white)
+                  .font(.title2)
+              }
+              .padding()
+              .background(Color.marketCard)
+              .cornerRadius(12)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+              Text("Description")
+                .font(Typography.caption1)
+                .foregroundColor(.marketTextSecondary)
+
+              TextField("Item Name", text: $customDescription)
+                .foregroundColor(.white)
+                .padding()
+                .background(Color.marketCard)
+                .cornerRadius(12)
+            }
+          }
+
+          HStack(spacing: 16) {
+            Button(action: {
+              showingCustomAmount = false
+              customAmount = ""
+              customDescription = ""
+            }) {
+              Text("Cancel")
+                .font(Typography.body)
+                .foregroundColor(.marketTextSecondary)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.marketCard)
+                .cornerRadius(12)
+            }
+
+            Button(action: {
+              if let amount = Double(customAmount) {
+                salesVM.addCustomAmount(
+                  name: customDescription.isEmpty ? "Custom Amount" : customDescription,
+                  price: amount
+                )
+                showingCustomAmount = false
+                customAmount = ""
+                customDescription = ""
+              }
+            }) {
+              Text("Add")
+                .font(Typography.body)
+                .bold()
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.white.opacity(0.2))
+                .cornerRadius(12)
+                .overlay(
+                  RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                )
+            }
+            .disabled(customAmount.isEmpty)
+            .opacity(customAmount.isEmpty ? 0.5 : 1.0)
+          }
+        }
+        .padding(24)
+      }
+      .presentationDetents([.medium])
+    }
     .navigationBarHidden(true)
     .navigationDestination(isPresented: $showingCheckout) {
       CheckoutView()
@@ -243,7 +320,28 @@ struct SalesView: View {
       Task {
         await marketSession.checkForActiveMarket()
         await inventoryVM.fetchProducts()
+        await fetchActivities()
       }
+    }
+  }
+
+  func fetchActivities() async {
+    guard let userId = client.auth.currentUser?.id else { return }
+
+    do {
+      let fetchedActivities: [Activity] =
+        try await client
+        .from("recent_activity")
+        .select()
+        .eq("user_id", value: userId)
+        .order("created_at", ascending: false)
+        .limit(20)
+        .execute()
+        .value
+
+      self.activities = fetchedActivities
+    } catch {
+      print("❌ [SalesView] Error fetching activities: \(error)")
     }
   }
 }
@@ -272,7 +370,7 @@ struct ProductCard: View {
       }
       .frame(height: 100)
       .padding(Spacing.sm)
-      .background(Color.white.opacity(0.15))
+      .background(Color.marketCard)
       .cornerRadius(CornerRadius.sm)
     }
   }

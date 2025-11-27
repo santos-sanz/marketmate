@@ -4,7 +4,9 @@ import Supabase
 
 struct CartItem: Identifiable {
   let id = UUID()
-  let product: Product
+  let product: Product?
+  var name: String
+  var price: Double
   var quantity: Int
 }
 
@@ -18,19 +20,24 @@ class SalesViewModel: ObservableObject {
   private let client = SupabaseService.shared.client
 
   var cartTotal: Double {
-    cartItems.reduce(0) { $0 + ($1.product.price * Double($1.quantity)) }
+    cartItems.reduce(0) { $0 + ($1.price * Double($1.quantity)) }
   }
 
   func addToCart(product: Product) {
-    if let index = cartItems.firstIndex(where: { $0.product.id == product.id }) {
+    if let index = cartItems.firstIndex(where: { $0.product?.id == product.id }) {
       cartItems[index].quantity += 1
     } else {
-      cartItems.append(CartItem(product: product, quantity: 1))
+      cartItems.append(
+        CartItem(product: product, name: product.name, price: product.price, quantity: 1))
     }
   }
 
-  func removeFromCart(product: Product) {
-    if let index = cartItems.firstIndex(where: { $0.product.id == product.id }) {
+  func addCustomAmount(name: String, price: Double) {
+    cartItems.append(CartItem(product: nil, name: name, price: price, quantity: 1))
+  }
+
+  func removeFromCart(item: CartItem) {
+    if let index = cartItems.firstIndex(where: { $0.id == item.id }) {
       if cartItems[index].quantity > 1 {
         cartItems[index].quantity -= 1
       } else {

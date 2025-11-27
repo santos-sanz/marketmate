@@ -10,16 +10,14 @@ struct CostDetailView: View {
   @State private var isEditing = false
   @State private var editedDescription: String
   @State private var editedAmount: String
-  @State private var editedCategory: String
+  @State private var editedCategoryId: UUID?
   @State private var showingDeleteAlert = false
-
-  let categories = ["Rent", "Utilities", "Supplies", "Marketing", "Other"]
 
   init(cost: Cost) {
     self.cost = cost
     _editedDescription = State(initialValue: cost.description)
     _editedAmount = State(initialValue: String(format: "%.2f", cost.amount))
-    _editedCategory = State(initialValue: cost.category ?? "Other")
+    _editedCategoryId = State(initialValue: cost.categoryId)
   }
 
   var body: some View {
@@ -31,11 +29,17 @@ struct CostDetailView: View {
           if isEditing {
             TextField("Description", text: $editedDescription)
               .foregroundColor(.white)
-            Picker("Category", selection: $editedCategory) {
-              ForEach(categories, id: \.self) { category in
-                Text(category).tag(category)
-              }
-            }
+
+            CategoryPicker(
+              selectedCategoryId: $editedCategoryId,
+              categories: costsVM.categories,
+              onAddCategory: { newCategory in
+                Task {
+                  await costsVM.addCategory(name: newCategory)
+                }
+              },
+              title: "Category"
+            )
           } else {
             HStack {
               Text("Description")
@@ -44,12 +48,14 @@ struct CostDetailView: View {
               Text(cost.description)
                 .foregroundColor(.white)
             }
-            if let category = cost.category {
+            if let categoryId = cost.categoryId,
+              let categoryName = costsVM.categories.first(where: { $0.id == categoryId })?.name
+            {
               HStack {
                 Text("Category")
                   .foregroundColor(.white.opacity(0.7))
                 Spacer()
-                Text(category)
+                Text(categoryName)
                   .foregroundColor(.white)
               }
             }
@@ -63,8 +69,8 @@ struct CostDetailView: View {
               Text("Amount")
                 .foregroundColor(.white.opacity(0.7))
               Spacer()
-              TextField("0.00", text: $editedAmount)
-                .keyboardType(.decimalPad)
+              TextField("\(profileVM.currencySymbol) 0.00", text: $editedAmount)
+                .currencyInput(text: $editedAmount)
                 .multilineTextAlignment(.trailing)
                 .foregroundColor(.white)
             }
@@ -144,9 +150,11 @@ struct CostDetailView: View {
     let updatedCost = Cost(
       id: cost.id,
       userId: cost.userId,
+      marketId: cost.marketId,
       description: editedDescription,
       amount: amount,
-      category: editedCategory,
+      categoryId: editedCategoryId,
+      isRecurrent: cost.isRecurrent,
       createdAt: cost.createdAt
     )
 

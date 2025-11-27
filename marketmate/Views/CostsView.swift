@@ -1,9 +1,13 @@
+import Supabase
 import SwiftUI
 
 struct CostsView: View {
   @EnvironmentObject var costsVM: CostsViewModel
+  @EnvironmentObject var profileVM: ProfileViewModel
   @State private var showingAddCost = false
   @State private var selectedCost: Cost?
+  @State private var activities: [Activity] = []
+  private let client = SupabaseService.shared.client
 
   var body: some View {
     ZStack {
@@ -17,24 +21,21 @@ struct CostsView: View {
             Image(systemName: "person.crop.circle.fill")
               .resizable()
               .frame(width: 40, height: 40)
-              .foregroundColor(.white.opacity(0.8))
+              .foregroundColor(.marketTextSecondary)
           }
 
           // Search Bar
           HStack {
             Image(systemName: "magnifyingglass")
-              .foregroundColor(.white.opacity(0.8))
-            TextField("Search", text: .constant(""))
+              .foregroundColor(.marketTextSecondary)
+            TextField("", text: .constant(""))
               .foregroundColor(.white)
               .accentColor(.white)
               .placeholder(when: true) {  // Always show placeholder for now as text is constant
                 Text("Search").foregroundColor(.white)
               }
           }
-          .padding(.vertical, 8)
-          .padding(.horizontal, 12)
-          .background(Color.white.opacity(0.3))
-          .cornerRadius(20)
+          .searchBarStyle()
 
           Button(action: {}) {
             Image(systemName: "chart.bar.xaxis")
@@ -67,9 +68,29 @@ struct CostsView: View {
         } else {
           ScrollView {
             LazyVStack(spacing: 16) {
+              // Recent Activity Section (Costs Only)
+              VStack(alignment: .leading, spacing: 12) {
+                Text("Recent Activity")
+                  .font(.headline)
+                  .foregroundColor(.white)
+
+                ForEach(activities.filter { $0.type == .cost }.prefix(5)) { activity in
+                  ActivityRow(
+                    activity: activity,
+                    currency: profileVM.currencySymbol
+                  )
+                }
+              }
+              .padding(.horizontal)
+
+              Divider()
+                .background(Color.white.opacity(0.2))
+                .padding()
+
               ForEach(costsVM.costs) { cost in
                 NavigationLink(destination: CostDetailView(cost: cost).environmentObject(costsVM)) {
                   CostRowView(cost: cost)
+                    .environmentObject(costsVM)
                 }
               }
             }
@@ -105,7 +126,28 @@ struct CostsView: View {
       Task {
         await costsVM.fetchCosts()
         await costsVM.fetchCategories()
+        await fetchActivities()
       }
+    }
+  }
+
+  func fetchActivities() async {
+    guard let userId = client.auth.currentUser?.id else { return }
+
+    do {
+      let fetchedActivities: [Activity] =
+        try await client
+        .from("recent_activity")
+        .select()
+        .eq("user_id", value: userId)
+        .order("created_at", ascending: false)
+        .limit(20)
+        .execute()
+        .value
+
+      self.activities = fetchedActivities
+    } catch {
+      print("❌ [CostsView] Error fetching activities: \(error)")
     }
   }
 }
@@ -113,15 +155,21 @@ struct CostsView: View {
 struct CostRowView: View {
   let cost: Cost
   @EnvironmentObject var profileVM: ProfileViewModel
+  @EnvironmentObject var costsVM: CostsViewModel
+
+  var categoryName: String? {
+    guard let categoryId = cost.categoryId else { return nil }
+    return costsVM.categories.first(where: { $0.id == categoryId })?.name
+  }
 
   var body: some View {
     HStack {
       Circle()
-        .fill(Color.red.opacity(0.2))
+        .fill(Color.marketRed.opacity(0.2))
         .frame(width: 40, height: 40)
         .overlay(
           Image(systemName: "arrow.down.circle.fill")
-            .foregroundColor(.red)
+            .foregroundColor(.marketRed)
         )
 
       VStack(alignment: .leading, spacing: 4) {
@@ -135,10 +183,10 @@ struct CostRowView: View {
       VStack(alignment: .trailing) {
         Text("-\(profileVM.currencySymbol) \(String(format: "%.2f", cost.amount))")
           .font(.headline)
-          .foregroundColor(.red)
+          .foregroundColor(.marketRed)
 
-        if let category = cost.category {
-          Text(category)
+        if let categoryName = categoryName {
+          Text(categoryName)
             .font(.caption)
             .foregroundColor(.marketTextSecondary)
         }

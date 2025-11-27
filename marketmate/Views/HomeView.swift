@@ -65,170 +65,168 @@ struct HomeView: View {
   @State private var searchText = ""
 
   var body: some View {
-    NavigationStack {
-      ZStack {
-        // Blue Gradient Background
-        Color.clear.revolutBackground()
+    ZStack {
+      // Blue Gradient Background
+      Color.clear.revolutBackground()
 
-        VStack(spacing: 24) {
-          // Header (Profile, Search, Reports)
-          HStack(spacing: 12) {
-            Button(action: { navigateToProfile = true }) {
-              Image(systemName: "person.crop.circle.fill")
-                .resizable()
-                .frame(width: 40, height: 40)
-                .foregroundColor(.white.opacity(0.8))
-            }
+      VStack(spacing: 24) {
+        // Header (Profile, Search, Reports)
+        HStack(spacing: 12) {
+          Button(action: { navigateToProfile = true }) {
+            Image(systemName: "person.crop.circle.fill")
+              .resizable()
+              .frame(width: 40, height: 40)
+              .foregroundColor(.marketTextSecondary)
+          }
 
-            // Search Bar
-            HStack {
-              Image(systemName: "magnifyingglass")
-                .foregroundColor(.white.opacity(0.8))  // Increased contrast
-              TextField("", text: $searchText)
-                .foregroundColor(.white)
-                .accentColor(.white)
-                .placeholder(when: searchText.isEmpty) {
-                  Text("Search").foregroundColor(Color.white.opacity(0.6))
+          // Search Bar
+          HStack {
+            Image(systemName: "magnifyingglass")
+              .foregroundColor(.marketTextSecondary)  // Increased contrast
+            TextField("", text: $searchText)
+              .foregroundColor(.white)
+              .accentColor(.white)
+              .placeholder(when: searchText.isEmpty) {
+                Text("Search").foregroundColor(.marketTextSecondary)
+              }
+          }
+          .padding(.vertical, 8)
+          .padding(.horizontal, 12)
+          .background(Color.marketCard)  // Darkened for better contrast with white icon
+          .cornerRadius(CornerRadius.lg)
+
+          Button(action: { navigateToReports = true }) {
+            Image(systemName: "chart.bar.xaxis")
+              .foregroundColor(.white)
+              .font(Typography.title3)
+          }
+        }
+        .padding(.horizontal, Spacing.md)
+        .padding(.top, 10)
+
+        // Total Balance (Only show if not searching)
+        if searchText.isEmpty {
+          VStack(spacing: 8) {
+            // Dropdown Menu for Time Interval
+            Menu {
+              Picker("Time Interval", selection: $selectedInterval) {
+                ForEach(TimeInterval.allCases, id: \.self) { interval in
+                  Text(interval.rawValue).tag(interval)
                 }
+              }
+            } label: {
+              HStack(spacing: 4) {
+                Text("Total Balance \(selectedInterval.rawValue)")
+                  .font(Typography.subheadline)
+                  .foregroundColor(.marketTextSecondary)
+                Image(systemName: "chevron.down")
+                  .font(.caption)
+                  .foregroundColor(.marketTextSecondary)
+              }
             }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 12)
-            .background(Color.white.opacity(0.1))  // Darkened for better contrast with white icon
-            .cornerRadius(20)
 
-            Button(action: { navigateToReports = true }) {
-              Image(systemName: "chart.bar.xaxis")
-                .foregroundColor(.white)
-                .font(Typography.title3)
+            Text("\(profileVM.currencySymbol) \(String(format: "%.2f", totalBalance))")
+              .font(Typography.display)
+              .foregroundColor(.white)
+          }
+
+          // Action Buttons
+          HStack(spacing: 30) {
+            ActionButton(icon: "tag.fill", label: "Add Sale") {  // Consistent Icon
+              showingAddSale = true
             }
+
+            ActionButton(icon: "arrow.down.circle.fill", label: "Add Cost") {  // Consistent Icon
+              showingAddCost = true
+            }
+
+            ActionButton(icon: "list.bullet", label: "Details") {
+              navigateToReports = true
+            }
+
           }
           .padding(.horizontal, Spacing.md)
-          .padding(.top, 10)
-
-          // Total Balance (Only show if not searching)
-          if searchText.isEmpty {
-            VStack(spacing: 8) {
-              // Dropdown Menu for Time Interval
-              Menu {
-                Picker("Time Interval", selection: $selectedInterval) {
-                  ForEach(TimeInterval.allCases, id: \.self) { interval in
-                    Text(interval.rawValue).tag(interval)
-                  }
-                }
-              } label: {
-                HStack(spacing: 4) {
-                  Text("Total Balance \(selectedInterval.rawValue)")
-                    .font(Typography.subheadline)
-                    .foregroundColor(.marketTextSecondary)
-                  Image(systemName: "chevron.down")
-                    .font(.caption)
-                    .foregroundColor(.marketTextSecondary)
-                }
-              }
-
-              Text("\(profileVM.currencySymbol) \(String(format: "%.2f", totalBalance))")
-                .font(Typography.display)
-                .foregroundColor(.white)
-            }
-
-            // Action Buttons
-            HStack(spacing: 30) {
-              ActionButton(icon: "tag.fill", label: "Add Sale") {  // Consistent Icon
-                showingAddSale = true
-              }
-
-              ActionButton(icon: "arrow.down.circle.fill", label: "Add Cost") {  // Consistent Icon
-                showingAddCost = true
-              }
-
-              ActionButton(icon: "list.bullet", label: "Details") {
-                navigateToReports = true
-              }
-
-            }
-            .padding(.horizontal, Spacing.md)
-          }
-
-          // Recent Transactions (List)
-          VStack(alignment: .leading) {
-            Text("Recent Activity")
-              .font(.headline)
-              .foregroundColor(.white)
-              .padding(.horizontal)
-
-            ScrollView {
-              VStack(spacing: 0) {
-                let filteredActivities =
-                  searchText.isEmpty
-                  ? activities
-                  : activities.filter {
-                    $0.title.localizedCaseInsensitiveContains(searchText)
-                      || ($0.subtitle ?? "").localizedCaseInsensitiveContains(searchText)
-                  }
-
-                ForEach(filteredActivities.prefix(5)) { activity in
-                  ActivityRow(
-                    activity: activity,
-                    currency: profileVM.currencySymbol
-                  )
-
-                  if activity.id != filteredActivities.prefix(5).last?.id {
-                    Divider()
-                      .background(Color.white.opacity(0.1))
-                      .padding(.leading, 50)
-                  }
-                }
-
-                // See All Button
-                NavigationLink(destination: ActivityHistoryView()) {
-                  Text("See all")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                }
-              }
-              .background(Color.marketCard)
-              .cornerRadius(16)
-              .padding(.horizontal)
-            }
-          }
-
-          Spacer()
         }
+
+        // Recent Transactions (List)
+        VStack(alignment: .leading) {
+          Text("Recent Activity")
+            .font(.headline)
+            .foregroundColor(.white)
+            .padding(.horizontal)
+
+          ScrollView {
+            VStack(spacing: 0) {
+              let filteredActivities =
+                searchText.isEmpty
+                ? activities
+                : activities.filter {
+                  $0.title.localizedCaseInsensitiveContains(searchText)
+                    || ($0.subtitle ?? "").localizedCaseInsensitiveContains(searchText)
+                }
+
+              ForEach(filteredActivities.prefix(5)) { activity in
+                ActivityRow(
+                  activity: activity,
+                  currency: profileVM.currencySymbol
+                )
+
+                if activity.id != filteredActivities.prefix(5).last?.id {
+                  Divider()
+                    .background(Color.marketCard)
+                    .padding(.leading, 50)
+                }
+              }
+
+              // See All Button
+              NavigationLink(destination: ActivityHistoryView()) {
+                Text("See all")
+                  .font(.subheadline)
+                  .fontWeight(.medium)
+                  .foregroundColor(.white)
+                  .frame(maxWidth: .infinity)
+                  .padding(.vertical, 12)
+              }
+            }
+            .background(Color.marketCard)
+            .cornerRadius(16)
+            .padding(.horizontal)
+          }
+        }
+
+        Spacer()
       }
-      .navigationDestination(isPresented: $navigateToProfile) {
-        ProfileView()
-      }
-      .navigationDestination(isPresented: $navigateToReports) {
-        ReportsView()
-      }
-      .navigationDestination(isPresented: $showingAddSale) {
-        SalesView()
+    }
+    .navigationDestination(isPresented: $navigateToProfile) {
+      ProfileView()
+    }
+    .navigationDestination(isPresented: $navigateToReports) {
+      ReportsView()
+    }
+    .navigationDestination(isPresented: $showingAddSale) {
+      SalesView()
+        .environmentObject(salesVM)
+        .environmentObject(costsVM)
+        .environmentObject(inventoryVM)
+    }
+    .navigationDestination(isPresented: $showingAddCost) {
+      AddCostView()
+    }
+    .navigationDestination(for: TransactionWrapper.self) { transaction in
+      if let sale = transaction.originalSale {
+        SaleDetailView(sale: sale)
           .environmentObject(salesVM)
+          .environmentObject(profileVM)
+      } else if let cost = transaction.originalCost {
+        CostDetailView(cost: cost)
           .environmentObject(costsVM)
+          .environmentObject(profileVM)
+      } else if let product = transaction.originalProduct {
+        ProductDetailView(product: product)
           .environmentObject(inventoryVM)
       }
-      .navigationDestination(isPresented: $showingAddCost) {
-        AddCostView()
-      }
-      .navigationDestination(for: TransactionWrapper.self) { transaction in
-        if let sale = transaction.originalSale {
-          SaleDetailView(sale: sale)
-            .environmentObject(salesVM)
-            .environmentObject(profileVM)
-        } else if let cost = transaction.originalCost {
-          CostDetailView(cost: cost)
-            .environmentObject(costsVM)
-            .environmentObject(profileVM)
-        } else if let product = transaction.originalProduct {
-          ProductDetailView(product: product)
-            .environmentObject(inventoryVM)
-        }
-      }
-      .navigationBarHidden(true)
     }
+    .navigationBarHidden(true)
     .onAppear {
       Task {
         await fetchActivities()
@@ -279,11 +277,11 @@ struct ActionButton: View {
     Button(action: action) {
       VStack(spacing: 8) {
         Circle()
-          .fill(Color.white.opacity(0.2))
+          .fill(Color.marketCard)
           .frame(width: 50, height: 50)
           .overlay(
             Image(systemName: icon)
-              .font(.system(size: 20, weight: .semibold))
+              .font(Typography.title3)
               .foregroundColor(.white)
           )
 
@@ -335,17 +333,17 @@ struct ActivityRow: View {
         .overlay(
           Image(systemName: iconName)
             .foregroundColor(iconColor)
-            .font(.system(size: 12, weight: .bold))
+            .font(Typography.caption1.weight(.bold))
         )
 
       VStack(alignment: .leading, spacing: 1) {
         Text(activity.title)
-          .font(.system(size: 13, weight: .medium))
+          .font(Typography.subheadline.weight(.medium))
           .foregroundColor(.white)
 
         if let subtitle = activity.subtitle {
           Text(subtitle)
-            .font(.caption2)
+            .font(Typography.caption2)
             .foregroundColor(.marketTextSecondary)
             .lineLimit(1)
         }
@@ -357,18 +355,30 @@ struct ActivityRow: View {
         // Show quantity for products, amount for sales/costs
         if let qty = activity.quantity {
           Text("\(qty > 0 ? "+" : "")\(qty)")
-            .font(.system(size: 13, weight: .semibold))
+            .font(Typography.subheadline.weight(.semibold))
             .foregroundColor(.white)
         } else if let amount = activity.amount {
           let isPositive = activity.type == .sale
           Text("\(isPositive ? "+" : "-")\(currency)\(String(format: "%.2f", amount))")
-            .font(.system(size: 13, weight: .semibold))
+            .font(Typography.subheadline.weight(.semibold))
             .foregroundColor(.white)
         }
 
-        Text(activity.createdAt.formatted(date: .abbreviated, time: .shortened))
-          .font(.caption2)
-          .foregroundColor(.marketTextSecondary)
+        Text(
+          {
+            let calendar = Calendar.current
+            if calendar.isDateInToday(activity.createdAt) {
+              return "Today \(activity.createdAt.formatted(date: .omitted, time: .shortened))"
+            } else if calendar.isDateInYesterday(activity.createdAt) {
+              return "Yesterday \(activity.createdAt.formatted(date: .omitted, time: .shortened))"
+            } else {
+              return
+                "\(activity.createdAt.formatted(date: .abbreviated, time: .omitted)) \(activity.createdAt.formatted(date: .omitted, time: .shortened))"
+            }
+          }()
+        )
+        .font(Typography.caption2)
+        .foregroundColor(.marketTextSecondary)
       }
     }
     .padding(.vertical, 6)
@@ -413,16 +423,16 @@ struct TransactionRow: View {
         .overlay(
           Image(systemName: iconName)
             .foregroundColor(iconColor)
-            .font(.system(size: 12, weight: .bold))
+            .font(Typography.caption1.weight(.bold))
         )
 
       VStack(alignment: .leading, spacing: 1) {
         Text(title)
-          .font(.system(size: 13, weight: .medium))
+          .font(Typography.subheadline.weight(.medium))
           .foregroundColor(.white)
 
         Text(subtitle)
-          .font(.caption2)
+          .font(Typography.caption2)
           .foregroundColor(.marketTextSecondary)
           .lineLimit(1)
       }
@@ -433,16 +443,16 @@ struct TransactionRow: View {
         // Show quantity for products, amount for sales/costs
         if let qty = quantity {
           Text("\(qty > 0 ? "+" : "")\(qty)")
-            .font(.system(size: 13, weight: .semibold))
+            .font(Typography.subheadline.weight(.semibold))
             .foregroundColor(.white)
         } else {
           Text("\(isPositive ? "+" : "-")\(currency)\(String(format: "%.2f", amount))")
-            .font(.system(size: 13, weight: .semibold))
+            .font(Typography.subheadline.weight(.semibold))
             .foregroundColor(.white)
         }
 
         Text(date.formatted(date: .abbreviated, time: .shortened))
-          .font(.caption2)
+          .font(Typography.caption2)
           .foregroundColor(.marketTextSecondary)
       }
     }
@@ -494,7 +504,7 @@ struct TransactionWrapper: Identifiable, Hashable {
 
   init(cost: Cost) {
     self.title = cost.description
-    self.subtitle = cost.category ?? "Expense"
+    self.subtitle = "Expense"
     self.amount = cost.amount
     self.isPositive = false
     self.date = cost.createdAt

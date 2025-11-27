@@ -24,7 +24,7 @@ struct Cost: Codable, Identifiable, Hashable {
   var marketId: UUID?
   var description: String
   var amount: Double
-  var category: String?
+  var categoryId: UUID?
   var isRecurrent: Bool?
   let createdAt: Date
 
@@ -34,7 +34,7 @@ struct Cost: Codable, Identifiable, Hashable {
     case marketId = "market_id"
     case description
     case amount
-    case category
+    case categoryId = "category_id"
     case isRecurrent = "is_recurrent"
     case createdAt = "created_at"
   }

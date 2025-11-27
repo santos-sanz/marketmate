@@ -2,21 +2,20 @@ import SwiftUI
 
 struct AddCostView: View {
   @EnvironmentObject var costsVM: CostsViewModel
+  @EnvironmentObject var profileVM: ProfileViewModel
   @Environment(\.presentationMode) var presentationMode
 
   var costToEdit: Cost?
 
   @State private var description = ""
   @State private var amount = ""
-  @State private var category = ""
-  @State private var isRecurrent = false
+  @State private var categoryId: UUID?
 
   init(costToEdit: Cost? = nil) {
     self.costToEdit = costToEdit
     _description = State(initialValue: costToEdit?.description ?? "")
     _amount = State(initialValue: costToEdit != nil ? String(costToEdit!.amount) : "")
-    _category = State(initialValue: costToEdit?.category ?? "")
-    _isRecurrent = State(initialValue: costToEdit?.isRecurrent ?? false)
+    _categoryId = State(initialValue: costToEdit?.categoryId)
   }
 
   var body: some View {
@@ -34,31 +33,38 @@ struct AddCostView: View {
 
           TextField("", text: $amount)
             .placeholder(when: amount.isEmpty) {
-              Text("Amount").foregroundColor(Color.white.opacity(0.6))
+              Text("\(profileVM.currencySymbol) Amount").foregroundColor(Color.white.opacity(0.6))
             }
             .foregroundColor(.white)
-            .keyboardType(.decimalPad)
+            .currencyInput(text: $amount)
         }
         .listRowBackground(Color.marketCard)
 
         Section(header: Text("Category").foregroundColor(.marketTextSecondary)) {
-          TextField("", text: $category)
-            .placeholder(when: category.isEmpty) {
-              Text("Category (Optional)").foregroundColor(Color.white.opacity(0.6))
-            }
-            .foregroundColor(.white)
-          // TODO: Add category picker from costsVM.categories
-        }
-        .listRowBackground(Color.marketCard)
-
-        Section {
-          Toggle("Recurrent Cost", isOn: $isRecurrent)
+          CategoryPicker(
+            selectedCategoryId: $categoryId,
+            categories: costsVM.categories.map {
+              Category(
+                id: $0.id, userId: $0.userId, name: $0.name, type: .cost, createdAt: $0.createdAt)
+            },  // Adapter
+            onAddCategory: { newCategory in
+              Task {
+                await costsVM.addCategory(name: newCategory)
+              }
+            },
+            title: "Category"
+          )
         }
         .listRowBackground(Color.marketCard)
       }
       .scrollContentBackground(.hidden)
     }
     .navigationTitle(costToEdit == nil ? "New Cost" : "Edit Cost")
+    .onAppear {
+      Task {
+        await costsVM.fetchCategories()
+      }
+    }
     .toolbar {
       ToolbarItem(placement: .confirmationAction) {
         Button("Save") {
@@ -78,16 +84,14 @@ struct AddCostView: View {
         var updatedCost = cost
         updatedCost.description = description
         updatedCost.amount = amountValue
-        updatedCost.category = category.isEmpty ? nil : category
-        updatedCost.isRecurrent = isRecurrent
+        updatedCost.categoryId = categoryId
 
         await costsVM.updateCost(updatedCost)
       } else {
         await costsVM.addCost(
           description: description,
           amount: amountValue,
-          category: category.isEmpty ? nil : category,
-          isRecurrent: isRecurrent
+          categoryId: categoryId
         )
       }
       presentationMode.wrappedValue.dismiss()

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AddProductView: View {
   @EnvironmentObject var inventoryVM: InventoryViewModel
+  @EnvironmentObject var profileVM: ProfileViewModel
   @Environment(\.presentationMode) var presentationMode
 
   var productToEdit: Product?
@@ -10,7 +11,7 @@ struct AddProductView: View {
   @State private var price = ""
   @State private var cost = ""
   @State private var stock = ""
-  @State private var category = ""
+  @State private var categoryId: UUID?
   @State private var description = ""
 
   init(productToEdit: Product? = nil) {
@@ -21,7 +22,7 @@ struct AddProductView: View {
     _stock = State(
       initialValue: productToEdit?.stockQuantity != nil ? String(productToEdit!.stockQuantity!) : ""
     )
-    _category = State(initialValue: productToEdit?.category ?? "")
+    _categoryId = State(initialValue: productToEdit?.categoryId)
     _description = State(initialValue: productToEdit?.description ?? "")
   }
 
@@ -37,35 +38,16 @@ struct AddProductView: View {
               Text("Product Name").foregroundColor(Color.white.opacity(0.6))
             }
             .foregroundColor(.white)
-
-          TextField("", text: $category)
-            .placeholder(when: category.isEmpty) {
-              Text("Category").foregroundColor(Color.white.opacity(0.6))
-            }
-            .foregroundColor(.white)
-
-          TextField("", text: $description)
-            .placeholder(when: description.isEmpty) {
-              Text("Description").foregroundColor(Color.white.opacity(0.6))
-            }
-            .foregroundColor(.white)
         }
         .listRowBackground(Color.marketCard)
 
         Section(header: Text("Pricing & Stock").foregroundColor(.marketTextSecondary)) {
           TextField("", text: $price)
             .placeholder(when: price.isEmpty) {
-              Text("Price").foregroundColor(Color.white.opacity(0.6))
+              Text("\(profileVM.currencySymbol) Price").foregroundColor(Color.white.opacity(0.6))
             }
             .foregroundColor(.white)
-            .keyboardType(.decimalPad)
-
-          TextField("", text: $cost)
-            .placeholder(when: cost.isEmpty) {
-              Text("Cost (Optional)").foregroundColor(Color.white.opacity(0.6))
-            }
-            .foregroundColor(.white)
-            .keyboardType(.decimalPad)
+            .currencyInput(text: $price)
 
           TextField("", text: $stock)
             .placeholder(when: stock.isEmpty) {
@@ -75,10 +57,39 @@ struct AddProductView: View {
             .keyboardType(.numberPad)
         }
         .listRowBackground(Color.marketCard)
+
+        Section(header: Text("Additional Information").foregroundColor(.marketTextSecondary)) {
+          TextField("", text: $cost)
+            .placeholder(when: cost.isEmpty) {
+              Text("\(profileVM.currencySymbol) Cost (Optional)").foregroundColor(
+                Color.white.opacity(0.6))
+            }
+            .foregroundColor(.white)
+            .currencyInput(text: $cost)
+
+          CategoryPicker(
+            selectedCategoryId: $categoryId,
+            categories: inventoryVM.categories,
+            onAddCategory: { newCategory in
+              Task {
+                await inventoryVM.addCategory(name: newCategory)
+              }
+            },
+            title: "Category"
+          )
+
+          TextField("", text: $description)
+            .placeholder(when: description.isEmpty) {
+              Text("Description").foregroundColor(Color.white.opacity(0.6))
+            }
+            .foregroundColor(.white)
+        }
+        .listRowBackground(Color.marketCard)
       }
       .scrollContentBackground(.hidden)
     }
     .navigationTitle(productToEdit == nil ? "New Product" : "Edit Product")
+    .navigationBarTitleDisplayMode(.inline)
     .toolbar {
       ToolbarItem(placement: .confirmationAction) {
         Button("Save") {
@@ -86,6 +97,11 @@ struct AddProductView: View {
         }
         .foregroundColor(.white)
         .disabled(name.isEmpty || price.isEmpty)
+      }
+    }
+    .onAppear {
+      Task {
+        await inventoryVM.fetchCategories()
       }
     }
   }
@@ -102,7 +118,7 @@ struct AddProductView: View {
         updatedProduct.price = priceValue
         updatedProduct.cost = costValue
         updatedProduct.stockQuantity = stockValue
-        updatedProduct.category = category.isEmpty ? nil : category
+        updatedProduct.categoryId = categoryId
         updatedProduct.description = description.isEmpty ? nil : description
 
         await inventoryVM.updateProduct(updatedProduct)
@@ -112,7 +128,7 @@ struct AddProductView: View {
           price: priceValue,
           cost: costValue,
           stock: stockValue,
-          category: category.isEmpty ? nil : category,
+          categoryId: categoryId,
           description: description.isEmpty ? nil : description
         )
       }

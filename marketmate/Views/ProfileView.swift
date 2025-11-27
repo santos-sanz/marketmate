@@ -29,7 +29,7 @@ struct ProfileView: View {
                 Image(systemName: "person.crop.circle.fill")
                   .resizable()
                   .frame(width: 80, height: 80)
-                  .foregroundColor(.white.opacity(0.8))
+                  .foregroundColor(.marketTextSecondary)
                   .padding(.top, Spacing.md)  // Minimal top padding
 
                 Text(authVM.currentUserEmail ?? "User")
@@ -165,6 +165,14 @@ struct ProfileView: View {
           "Are you sure you want to delete your account? This action cannot be undone and all your data will be lost."
         )
       }
+      .alert("Error", isPresented: .constant(profileVM.errorMessage != nil)) {
+        Button("OK", role: .cancel) {
+          profileVM.errorMessage = nil
+        }
+      } message: {
+        Text(profileVM.errorMessage ?? "An unknown error occurred")
+      }
+      .disabled(profileVM.isLoading)
     }
   }
 }
@@ -180,7 +188,7 @@ struct ProfileRow: View {
     HStack(spacing: Spacing.md) {
       Image(systemName: icon)
         .font(.system(size: 20))
-        .foregroundColor(titleColor == .marketRed ? .marketRed : .white.opacity(0.8))
+        .foregroundColor(titleColor == .marketRed ? .marketRed : .marketTextSecondary)
         .frame(width: 24)
 
       Text(title)

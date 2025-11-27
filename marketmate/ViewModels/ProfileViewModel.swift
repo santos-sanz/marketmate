@@ -144,22 +144,65 @@ class ProfileViewModel: ObservableObject {
   func deleteAccount() async {
     print("👤 [ProfileVM] Deleting account...")
     isLoading = true
+    errorMessage = nil
+
     do {
+      // Verify we have a valid session before attempting deletion
       guard let userId = client.auth.currentUser?.id else {
+        errorMessage = "No user session found. Please sign in again."
         print("❌ [ProfileVM] No user ID found for deletion")
+        isLoading = false
         return
       }
 
-      // Delete Profile (Assuming Cascade Delete is set up in Supabase for related data)
-      try await client.from("profiles").delete().eq("id", value: userId).execute()
+      print("👤 [ProfileVM] Invoking delete-account Edge Function for user: \(userId)")
 
-      // Sign Out
-      try await client.auth.signOut()
-      print("✅ [ProfileVM] Account deleted successfully")
+      // ATOMIC OPERATION: Invoke Edge Function to delete user from auth.users
+      // This triggers cascade delete of all user data and invalidates all JWT tokens
+      let _: Void = try await client.functions.invoke("delete-account")
+
+      print("✅ [ProfileVM] Account deleted successfully via Edge Function")
+
+      // At this point, the user is deleted and JWT is invalidated server-side
+      // Clean up local state - this MUST happen regardless of signOut result
+      self.profile = nil
+      self.selectedCurrency = "USD"
+
+      // Attempt to sign out locally to clear session storage
+      // We don't throw if this fails because the user is already deleted server-side
+      do {
+        try await client.auth.signOut()
+        print("✅ [ProfileVM] Local session cleared")
+      } catch {
+        // Log but don't fail - user is already deleted server-side
+        print("⚠️ [ProfileVM] Local signOut failed but user already deleted: \(error)")
+      }
+
     } catch {
-      errorMessage = "Failed to delete account: \(error.localizedDescription)"
-      print("❌ [ProfileVM] Error deleting account: \(error)")
+      // Only show error if Edge Function failed (user NOT deleted)
+      // Try to extract detailed error message from response
+      let detailedError: String
+      if let httpError = error as? URLError {
+        detailedError = "Network error: \(httpError.localizedDescription)"
+      } else {
+        // Try to extract error from the response data
+        let errorString = String(describing: error)
+        if errorString.contains("httpError") {
+          // The error likely contains JSON response data
+          detailedError =
+            "Server error (400). Please check:\n1. Edge Function has SUPABASE_SERVICE_ROLE_KEY secret configured\n2. Edge Function logs in Supabase Dashboard for details"
+        } else {
+          detailedError = error.localizedDescription
+        }
+      }
+
+      errorMessage = "Failed to delete account: \(detailedError)"
+      print("❌ [ProfileVM] Error deleting account:")
+      print("   Error type: \(type(of: error))")
+      print("   Error description: \(error)")
+      print("   Localized: \(error.localizedDescription)")
     }
+
     isLoading = false
   }
 }

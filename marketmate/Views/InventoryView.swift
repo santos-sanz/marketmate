@@ -1,10 +1,14 @@
+import Supabase
 import SwiftUI
 
 struct InventoryView: View {
   @EnvironmentObject var inventoryVM: InventoryViewModel
+  @EnvironmentObject var profileVM: ProfileViewModel
   @State private var showingAddProduct = false
   @State private var searchText = ""
   @State private var selectedProduct: Product?
+  @State private var activities: [Activity] = []
+  private let client = SupabaseService.shared.client
 
   var filteredProducts: [Product] {
     if searchText.isEmpty {
@@ -33,7 +37,7 @@ struct InventoryView: View {
           HStack {
             Image(systemName: "magnifyingglass")
               .foregroundColor(.white.opacity(0.8))
-            TextField("Search", text: $searchText)
+            TextField("", text: $searchText)
               .foregroundColor(.white)
               .accentColor(.white)
               .placeholder(when: searchText.isEmpty) {
@@ -75,6 +79,27 @@ struct InventoryView: View {
           }
         } else {
           List {
+            Section {
+              // Recent Activity Section (Products Only)
+              VStack(alignment: .leading, spacing: 12) {
+                Text("Recent Activity")
+                  .font(.headline)
+                  .foregroundColor(.white)
+
+                ForEach(
+                  activities.filter {
+                    [.productCreated, .productUpdated, .productDeleted].contains($0.type)
+                  }.prefix(5)
+                ) { activity in
+                  ActivityRow(
+                    activity: activity,
+                    currency: profileVM.currencySymbol
+                  )
+                }
+              }
+              .listRowBackground(Color.clear)
+            }
+
             ForEach(filteredProducts) { product in
               NavigationLink(
                 destination: ProductDetailView(product: product).environmentObject(inventoryVM)
@@ -125,7 +150,28 @@ struct InventoryView: View {
     .onAppear {
       Task {
         await inventoryVM.fetchProducts()
+        await fetchActivities()
       }
+    }
+  }
+
+  func fetchActivities() async {
+    guard let userId = client.auth.currentUser?.id else { return }
+
+    do {
+      let fetchedActivities: [Activity] =
+        try await client
+        .from("recent_activity")
+        .select()
+        .eq("user_id", value: userId)
+        .order("created_at", ascending: false)
+        .limit(20)
+        .execute()
+        .value
+
+      self.activities = fetchedActivities
+    } catch {
+      print("❌ [InventoryView] Error fetching activities: \(error)")
     }
   }
 }

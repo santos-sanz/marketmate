@@ -359,16 +359,19 @@ struct SaleDetailsView: View {
 
 struct CostDetailsView: View {
   let cost: Cost
+  @EnvironmentObject var costsVM: CostsViewModel
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
-      if let category = cost.category {
+      if let categoryId = cost.categoryId,
+        let categoryName = costsVM.categories.first(where: { $0.id == categoryId })?.name
+      {
         HStack {
           VStack(alignment: .leading, spacing: 4) {
             Text("Category")
               .font(.caption)
               .foregroundColor(.marketTextSecondary)
-            Text(category)
+            Text(categoryName)
               .font(.subheadline)
               .foregroundColor(.white)
           }
@@ -406,6 +409,7 @@ struct CostDetailsView: View {
 
 struct ProductDetailsView: View {
   let product: Product
+  @EnvironmentObject var inventoryVM: InventoryViewModel
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -476,14 +480,16 @@ struct ProductDetailsView: View {
         }
       }
 
-      if let category = product.category {
+      if let categoryId = product.categoryId,
+        let categoryName = inventoryVM.categories.first(where: { $0.id == categoryId })?.name
+      {
         Divider().background(Color.white.opacity(0.1))
         HStack {
           VStack(alignment: .leading, spacing: 4) {
             Text("Category")
               .font(.caption)
               .foregroundColor(.marketTextSecondary)
-            Text(category)
+            Text(categoryName)
               .font(.subheadline)
               .foregroundColor(.white)
           }

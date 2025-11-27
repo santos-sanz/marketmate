@@ -11,9 +11,27 @@ struct CheckoutView: View {
   @State private var notes = ""
   @State private var source = "App"
 
+  // Discount State
+  @State private var discountValue = ""
+  @State private var isPercentage = false
+  @State private var isDiscountExpanded = false
+
+  var discountAmount: Double {
+    guard let value = Double(discountValue) else { return 0 }
+    if isPercentage {
+      return salesVM.cartTotal * (value / 100)
+    } else {
+      return value
+    }
+  }
+
+  var finalTotal: Double {
+    max(0, salesVM.cartTotal - discountAmount)
+  }
+
   var changeDue: Double {
     guard let cash = Double(cashReceived) else { return 0 }
-    return max(0, cash - salesVM.cartTotal)
+    return max(0, cash - finalTotal)
   }
 
   let paymentMethods = ["Cash", "Card", "Transfer"]
@@ -32,41 +50,48 @@ struct CheckoutView: View {
 
       VStack {
         List {
-          Section(header: Text("Items").foregroundColor(.marketTextSecondary)) {
+          Section(header: Text("Items").foregroundColor(.white).bold()) {
             ForEach(salesVM.cartItems) { item in
               HStack {
-                Text("\(item.quantity) x \(item.product.name)")
+                Text("\(item.quantity) x \(item.name)")
                   .foregroundColor(.white)
+                  .fontWeight(.medium)
                 Spacer()
                 Text(
-                  "\(profileVM.currencySymbol) \(String(format: "%.2f", item.product.price * Double(item.quantity)))"
+                  "\(profileVM.currencySymbol) \(String(format: "%.2f", item.price * Double(item.quantity)))"
                 )
                 .foregroundColor(.white)
+                .fontWeight(.bold)
               }
-              .listRowBackground(Color.marketCard)
+              .listRowBackground(Color.white.opacity(0.2))
             }
           }
 
-          Section(header: Text("Payment").foregroundColor(.marketTextSecondary)) {
+          Section(header: Text("Payment").foregroundColor(.white).bold()) {
             Picker("Method", selection: $paymentMethod) {
               ForEach(paymentMethods, id: \.self) { method in
                 Text(method).tag(method)
               }
             }
             .pickerStyle(SegmentedPickerStyle())
-            .listRowBackground(Color.marketCard)
+            .listRowBackground(Color.white.opacity(0.2))
 
             if paymentMethod == "Cash" {
               HStack {
                 Text("Cash Received")
                   .foregroundColor(.white)
+                  .fontWeight(.medium)
                 Spacer()
-                TextField("0.00", text: $cashReceived)
-                  .keyboardType(.decimalPad)
+                TextField("", text: $cashReceived)
+                  .placeholder(when: cashReceived.isEmpty, alignment: .trailing) {
+                    Text("\(profileVM.currencySymbol) 0.00").foregroundColor(.white.opacity(0.5))
+                  }
+                  .currencyInput(text: $cashReceived)
                   .multilineTextAlignment(.trailing)
                   .foregroundColor(.white)
+                  .font(.title3)
               }
-              .listRowBackground(Color.marketCard)
+              .listRowBackground(Color.white.opacity(0.2))
 
               if !cashReceived.isEmpty {
                 HStack {
@@ -79,27 +104,92 @@ struct CheckoutView: View {
                     .fontWeight(.bold)
                     .foregroundColor(.marketGreen)
                 }
-                .listRowBackground(Color.marketCard)
+                .listRowBackground(Color.white.opacity(0.2))
               }
             }
 
-            TextField("Notes", text: $notes)
-              .listRowBackground(Color.marketCard)
+            TextField("", text: $notes)
+              .placeholder(when: notes.isEmpty) {
+                Text("Notes").foregroundColor(.white.opacity(0.5))
+              }
+              .listRowBackground(Color.white.opacity(0.2))
               .foregroundColor(.white)
+          }
+
+          Section(
+            header:
+              HStack {
+                Text("Discount")
+                  .foregroundColor(.white)
+                  .bold()
+                Spacer()
+                Button(action: {
+                  withAnimation {
+                    isDiscountExpanded.toggle()
+                  }
+                }) {
+                  Image(systemName: isDiscountExpanded ? "minus.circle.fill" : "plus.circle.fill")
+                    .foregroundColor(.white)
+                    .font(.title3)
+                }
+              }
+          ) {
+            if isDiscountExpanded {
+              HStack {
+                TextField("", text: $discountValue)
+                  .placeholder(when: discountValue.isEmpty) {
+                    Text("\(profileVM.currencySymbol) Discount").foregroundColor(
+                      .white.opacity(0.5))
+                  }
+                  .currencyInput(text: $discountValue)
+                  .foregroundColor(.white)
+
+                Picker("Type", selection: $isPercentage) {
+                  Text(profileVM.currencySymbol).tag(false)
+                  Text("%").tag(true)
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .frame(width: 100)
+              }
+              .listRowBackground(Color.white.opacity(0.2))
+
+              if discountAmount > 0 {
+                HStack {
+                  Text("Discount Applied")
+                    .foregroundColor(.marketGreen)
+                  Spacer()
+                  Text("- \(profileVM.currencySymbol) \(String(format: "%.2f", discountAmount))")
+                    .foregroundColor(.marketGreen)
+                }
+                .listRowBackground(Color.white.opacity(0.2))
+              }
+            }
           }
 
           Section {
             HStack {
-              Text("Total to Pay")
-                .font(Typography.title2)
-                .foregroundColor(.white)
+              Text("Subtotal")
+                .foregroundColor(.white.opacity(0.9))
+                .fontWeight(.medium)
               Spacer()
               Text("\(profileVM.currencySymbol) \(String(format: "%.2f", salesVM.cartTotal))")
+                .foregroundColor(.white.opacity(0.9))
+                .fontWeight(.medium)
+            }
+            .listRowBackground(Color.white.opacity(0.2))
+
+            HStack {
+              Text("Total to Pay")
+                .font(Typography.title2)
+                .bold()
+                .foregroundColor(.white)
+              Spacer()
+              Text("\(profileVM.currencySymbol) \(String(format: "%.2f", finalTotal))")
                 .font(.system(size: 40, weight: .bold))
                 .foregroundColor(.white)
             }
             .padding(.vertical, 8)
-            .listRowBackground(Color.marketCard)
+            .listRowBackground(Color.white.opacity(0.2))
           }
         }
         .scrollContentBackground(.hidden)
@@ -108,10 +198,10 @@ struct CheckoutView: View {
           Text("Confirm Sale")
             .font(Typography.headline)
             .fontWeight(.semibold)
-            .foregroundColor(.white)
+            .foregroundColor(.black)
             .frame(maxWidth: .infinity)
             .padding(Spacing.md)
-            .background(Color.marketBlue)
+            .background(Color.white)
             .cornerRadius(CornerRadius.xl)
         }
         .padding(Spacing.md)
@@ -137,23 +227,37 @@ struct CheckoutView: View {
   }
 
   private func confirmSale() {
-    print("Confirm sale pressed. Payment Method: \(paymentMethod), Total: \(salesVM.cartTotal)")
-    let items = salesVM.cartItems.map { cartItem in
+    print("Confirm sale pressed. Payment Method: \(paymentMethod), Total: \(finalTotal)")
+    var items = salesVM.cartItems.map { cartItem in
       SaleItem(
         id: UUID(),  // Placeholder, handled in VM
         saleId: UUID(),  // Placeholder
-        productId: cartItem.product.id,
-        productName: cartItem.product.name,
+        productId: cartItem.product?.id,
+        productName: cartItem.name,
         quantity: cartItem.quantity,
-        priceAtSale: cartItem.product.price,
-        costAtSale: cartItem.product.cost
+        priceAtSale: cartItem.price,
+        costAtSale: cartItem.product?.cost
       )
+    }
+
+    // Add discount as a negative line item if applicable
+    if discountAmount > 0 {
+      let discountItem = SaleItem(
+        id: UUID(),
+        saleId: UUID(),
+        productId: nil,
+        productName: "Discount",
+        quantity: 1,
+        priceAtSale: -discountAmount,
+        costAtSale: nil
+      )
+      items.append(discountItem)
     }
 
     Task {
       await salesVM.createSale(
         items: items,
-        total: salesVM.cartTotal,
+        total: finalTotal,
         paymentMethod: paymentMethod,
         source: source,
         notes: notes.isEmpty ? nil : notes,

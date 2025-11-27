@@ -5,7 +5,7 @@ import Supabase
 @MainActor
 class CostsViewModel: ObservableObject {
   @Published var costs: [Cost] = []
-  @Published var categories: [CostCategory] = []
+  @Published var categories: [Category] = []
   @Published var isLoading = false
   @Published var errorMessage: String?
 
@@ -43,7 +43,12 @@ class CostsViewModel: ObservableObject {
   func fetchCategories() async {
     print("💰 [CostsVM] Fetching categories...")
     do {
-      let categories: [CostCategory] = try await client.from("cost_categories").select().execute()
+      let categories: [Category] =
+        try await client
+        .from("categories")
+        .select()
+        .eq("type", value: "cost")
+        .execute()
         .value
       self.categories = categories
       print("✅ [CostsVM] Fetched \(categories.count) categories successfully")
@@ -52,7 +57,31 @@ class CostsViewModel: ObservableObject {
     }
   }
 
-  func addCost(description: String, amount: Double, category: String?, isRecurrent: Bool) async {
+  func addCategory(name: String) async {
+    print("💰 [CostsVM] Adding category: \(name)")
+    guard let userId = client.auth.currentUser?.id else {
+      print("❌ [CostsVM] No user ID found")
+      return
+    }
+
+    let newCategory = Category(
+      id: UUID(),
+      userId: userId,
+      name: name,
+      type: .cost,
+      createdAt: Date()
+    )
+
+    do {
+      try await client.from("categories").insert(newCategory).execute()
+      print("✅ [CostsVM] Category added successfully")
+      await fetchCategories()
+    } catch {
+      print("❌ [CostsVM] Error adding category: \(error)")
+    }
+  }
+
+  func addCost(description: String, amount: Double, categoryId: UUID?) async {
     print("💰 [CostsVM] Adding cost: \(description)")
     guard let userId = client.auth.currentUser?.id else {
       print("❌ [CostsVM] No user ID found")
@@ -64,8 +93,8 @@ class CostsViewModel: ObservableObject {
       marketId: nil,
       description: description,
       amount: amount,
-      category: category,
-      isRecurrent: isRecurrent,
+      categoryId: categoryId,
+      isRecurrent: false,
       createdAt: Date()
     )
     do {

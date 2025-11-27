@@ -3,8 +3,8 @@ import SwiftUI
 // MARK: - Colors
 extension Color {
   // Primary Colors
-  static let marketBlue = Color(hex: "0066CC") // Slightly darker than 007AFF
-  static let marketDarkBlue = Color(hex: "004499") // Slightly darker than 0055B3
+  static let marketBlue = Color(hex: "0066CC")  // Slightly darker than 007AFF
+  static let marketDarkBlue = Color(hex: "004499")  // Slightly darker than 0055B3
   static let marketLightBlue = Color(hex: "5AC8FA")
 
   // Semantic Colors
@@ -100,10 +100,10 @@ extension View {
   func primaryButtonStyle() -> some View {
     self
       .font(Typography.headline)
-      .foregroundColor(.black)
+      .foregroundColor(.white)
       .frame(maxWidth: .infinity)
       .padding(Spacing.md)
-      .background(Color.marketGreen)
+      .background(Color.marketBlue)
       .cornerRadius(CornerRadius.xl)
   }
 

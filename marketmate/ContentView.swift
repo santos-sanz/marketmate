@@ -13,6 +13,7 @@ struct ContentView: View {
           .environmentObject(profileVM)
       } else {
         AuthView()
+          .environmentObject(authVM)
       }
     }
     .preferredColorScheme(isDarkMode ? .dark : .light)

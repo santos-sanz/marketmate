@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct AuthView: View {
-  @StateObject private var authVM = AuthViewModel()
+  @EnvironmentObject var authVM: AuthViewModel
   @State private var isSignUp = false
 
   var body: some View {

@@ -8,7 +8,7 @@ struct Product: Codable, Identifiable, Hashable {
   var price: Double
   var cost: Double?
   var stockQuantity: Int?
-  var category: String?
+  var categoryId: UUID?
   var imageUrl: String?
   let createdAt: Date
 
@@ -20,7 +20,7 @@ struct Product: Codable, Identifiable, Hashable {
     case price
     case cost
     case stockQuantity = "stock_quantity"
-    case category
+    case categoryId = "category_id"
     case imageUrl = "image_url"
     case createdAt = "created_at"
   }

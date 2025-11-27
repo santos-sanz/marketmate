@@ -40,7 +40,7 @@ class InventoryViewModel: ObservableObject {
   }
 
   func addProduct(
-    name: String, price: Double, cost: Double?, stock: Int?, category: String?, description: String?
+    name: String, price: Double, cost: Double?, stock: Int?, categoryId: UUID?, description: String?
   ) async {
     print("📦 [InventoryVM] Adding product: \(name)")
     guard let userId = client.auth.currentUser?.id else {
@@ -56,7 +56,7 @@ class InventoryViewModel: ObservableObject {
       price: price,
       cost: cost,
       stockQuantity: stock,
-      category: category,
+      categoryId: categoryId,
       imageUrl: nil,
       createdAt: Date()
     )
@@ -104,24 +104,68 @@ class InventoryViewModel: ObservableObject {
   }
   func adjustStock(productId: UUID, change: Int) async {
     print("📦 [InventoryVM] Adjusting stock for \(productId) by \(change)")
-    
+
     // 1. Get current product
     guard let productIndex = products.firstIndex(where: { $0.id == productId }) else {
       print("❌ [InventoryVM] Product not found in local cache")
       return
     }
-    
+
     var product = products[productIndex]
-    
+
     // 2. Update local stock
     if let currentStock = product.stockQuantity {
       let newStock = currentStock + change
       product.stockQuantity = newStock
-      
+
       // 3. Update in DB
       await updateProduct(product)
     } else {
       print("⚠️ [InventoryVM] Product has no stock tracking")
+    }
+  }
+  // MARK: - Categories
+
+  @Published var categories: [Category] = []
+
+  func fetchCategories() async {
+    print("📦 [InventoryVM] Fetching categories...")
+    do {
+      let categories: [Category] =
+        try await client
+        .from("categories")
+        .select()
+        .eq("type", value: "inventory")
+        .execute()
+        .value
+      self.categories = categories
+      print("✅ [InventoryVM] Fetched \(categories.count) categories successfully")
+    } catch {
+      print("❌ [InventoryVM] Error fetching categories: \(error)")
+    }
+  }
+
+  func addCategory(name: String) async {
+    print("📦 [InventoryVM] Adding category: \(name)")
+    guard let userId = client.auth.currentUser?.id else {
+      print("❌ [InventoryVM] No user ID found")
+      return
+    }
+
+    let newCategory = Category(
+      id: UUID(),
+      userId: userId,
+      name: name,
+      type: .inventory,
+      createdAt: Date()
+    )
+
+    do {
+      try await client.from("categories").insert(newCategory).execute()
+      print("✅ [InventoryVM] Category added successfully")
+      await fetchCategories()
+    } catch {
+      print("❌ [InventoryVM] Error adding category: \(error)")
     }
   }
 }
