@@ -111,7 +111,6 @@ struct ActivityHistoryView: View {
                                 sheetType = type
                               }
                             )
-                            .transition(.opacity.combined(with: .move(edge: .top)))
                           }
 
                           if activity.id != group.value.last?.id {
@@ -207,8 +206,6 @@ struct FilterChip: View {
   ActivityHistoryView()
     .environmentObject(ProfileViewModel())
 }
-
-
 
 struct FilterSheet: View {
   @ObservedObject var viewModel: ActivityViewModel

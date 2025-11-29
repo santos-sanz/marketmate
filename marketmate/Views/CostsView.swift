@@ -80,15 +80,13 @@ struct CostsView: View {
                     )
                     .contentShape(Rectangle())
                     .onTapGesture {
-                      withAnimation {
-                        if expandedActivityId == activity.id {
-                          expandedActivityId = nil
-                          activityVM.expandedDetails = nil
-                        } else {
-                          expandedActivityId = activity.id
-                          Task {
-                            await activityVM.fetchDetails(for: activity)
-                          }
+                      if expandedActivityId == activity.id {
+                        expandedActivityId = nil
+                        activityVM.expandedDetails = nil
+                      } else {
+                        expandedActivityId = activity.id
+                        Task {
+                          await activityVM.fetchDetails(for: activity)
                         }
                       }
                     }

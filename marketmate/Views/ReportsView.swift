@@ -27,6 +27,9 @@ struct ReportsView: View {
             }
           }
           .padding(.vertical, 16)
+          .animation(nil, value: reportsVM.isLoading)
+          .animation(nil, value: reportsVM.salesData.count)
+          .animation(nil, value: reportsVM.totalCosts)
         }
         .overlay(alignment: .topTrailing) {
           if reportsVM.isLoading {
@@ -38,6 +41,9 @@ struct ReportsView: View {
       .navigationBarTitleDisplayMode(.inline)
       .onAppear {
         Task { await reportsVM.fetchData() }
+      }
+      .transaction { transaction in
+        transaction.disablesAnimations = true
       }
     }
   }
