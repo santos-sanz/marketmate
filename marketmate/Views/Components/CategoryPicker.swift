@@ -40,10 +40,8 @@ struct CategoryPicker: View {
               Divider()
 
               Button(action: {
-                withAnimation {
-                  isAddingNew = true
-                  newCategoryName = ""
-                }
+                isAddingNew = true
+                newCategoryName = ""
               }) {
                 Label("Add New Category", systemImage: "plus")
               }
@@ -62,10 +60,8 @@ struct CategoryPicker: View {
       if isAddingNew {
         HStack(spacing: 10) {
           Button(action: {
-            withAnimation {
-              isAddingNew = false
-              newCategoryName = ""
-            }
+            isAddingNew = false
+            newCategoryName = ""
           }) {
             Image(systemName: "xmark.circle.fill")
               .foregroundColor(.red)
@@ -92,7 +88,6 @@ struct CategoryPicker: View {
           }
           .disabled(newCategoryName.isEmpty)
         }
-        .transition(.move(edge: .top).combined(with: .opacity))
       }
     }
   }
@@ -102,9 +97,7 @@ struct CategoryPicker: View {
     onAddCategory(newCategoryName)
     // Optimistic selection logic should be handled by parent or by observing categories updates
     // For now we rely on the parent refreshing the categories list and the new category appearing
-    withAnimation {
-      isAddingNew = false
-    }
+    isAddingNew = false
     newCategoryName = ""
   }
 }

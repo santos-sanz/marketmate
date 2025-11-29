@@ -90,15 +90,13 @@ struct ActivityHistoryView: View {
                           )
                           .contentShape(Rectangle())
                           .onTapGesture {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                              if expandedActivityId == activity.id {
-                                expandedActivityId = nil
-                                viewModel.expandedDetails = nil
-                              } else {
-                                expandedActivityId = activity.id
-                                Task {
-                                  await viewModel.fetchDetails(for: activity)
-                                }
+                            if expandedActivityId == activity.id {
+                              expandedActivityId = nil
+                              viewModel.expandedDetails = nil
+                            } else {
+                              expandedActivityId = activity.id
+                              Task {
+                                await viewModel.fetchDetails(for: activity)
                               }
                             }
                           }

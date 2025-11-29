@@ -124,9 +124,7 @@ struct CheckoutView: View {
                   .bold()
                 Spacer()
                 Button(action: {
-                  withAnimation {
-                    isDiscountExpanded.toggle()
-                  }
+                  isDiscountExpanded.toggle()
                 }) {
                   Image(systemName: isDiscountExpanded ? "minus.circle.fill" : "plus.circle.fill")
                     .foregroundColor(.white)

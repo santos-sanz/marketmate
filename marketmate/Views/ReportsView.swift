@@ -27,9 +27,6 @@ struct ReportsView: View {
             }
           }
           .padding(.vertical, 16)
-          .animation(nil, value: reportsVM.isLoading)
-          .animation(nil, value: reportsVM.salesData.count)
-          .animation(nil, value: reportsVM.totalCosts)
         }
         .overlay(alignment: .topTrailing) {
           if reportsVM.isLoading {
@@ -295,6 +292,9 @@ struct ReportsView: View {
             .foregroundStyle(.white)
             .symbolSize(30)
           }
+        }
+        .transaction { transaction in
+          transaction.animation = nil
         }
         .chartYAxis {
           AxisMarks(position: .leading) { value in
