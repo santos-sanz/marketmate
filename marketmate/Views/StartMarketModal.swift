@@ -87,7 +87,7 @@ struct StartMarketModal: View {
     } message: {
       Text("Please enter the market name manually.")
     }
-    .onChange(of: locationManager.authorizationStatus) { status in
+    .onChange(of: locationManager.authorizationStatus) { _, status in
       if status == .denied || status == .restricted {
         showingPermissionAlert = true
         locationManager.stopUpdatingLocation()

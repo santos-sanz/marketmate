@@ -80,9 +80,7 @@ struct InventoryView: View {
         } else {
           List {
             ForEach(filteredProducts) { product in
-              NavigationLink(
-                destination: ProductDetailView(product: product).environmentObject(inventoryVM)
-              ) {
+              NavigationLink(value: product) {
                 ProductRowView(product: product)
               }
               .listRowBackground(Color.marketCard)
@@ -154,6 +152,10 @@ struct InventoryView: View {
       }
     }
     .navigationBarHidden(true)
+    .navigationDestination(for: Product.self) { product in
+      ProductDetailView(product: product)
+        .environmentObject(inventoryVM)
+    }
     .navigationDestination(isPresented: $showingAddProduct) {
       AddProductView()
         .environmentObject(inventoryVM)

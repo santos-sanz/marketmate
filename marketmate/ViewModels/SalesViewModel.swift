@@ -236,7 +236,7 @@ class SalesViewModel: ObservableObject {
       // Then insert new items
       // Ensure items have the correct saleId
       let itemsToInsert = updatedItems.map { item -> SaleItem in
-        var newItem = item
+        // var newItem = item
         // We can keep the original ID or generate new ones.
         // Generating new ones is safer for the delete/insert strategy to avoid conflicts if any weird caching.
         // But keeping IDs is better for tracking? Let's generate new IDs for simplicity in this strategy.

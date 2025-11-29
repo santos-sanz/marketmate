@@ -15,6 +15,13 @@ class ReportsViewModel: ObservableObject {
   @Published var totalCosts: Double = 0
   @Published var netProfit: Double = 0
   @Published var salesData: [DailySales] = []
+  @Published var salesCount: Int = 0
+  @Published var averageTicket: Double = 0
+  @Published var profitMargin: Double = 0
+  @Published var averageDailySales: Double = 0
+  @Published var paymentBreakdown: [Breakdown] = []
+  @Published var locationBreakdown: [Breakdown] = []
+  @Published var bestDay: DailySales?
   @Published var isLoading = false
   @Published var selectedTimeRange: TimeRange = .month
 
@@ -24,6 +31,13 @@ class ReportsViewModel: ObservableObject {
     let id = UUID()
     let date: Date
     let amount: Double
+  }
+
+  struct Breakdown: Identifiable {
+    let id = UUID()
+    let label: String
+    let value: Double
+    let percentage: Double
   }
 
   func fetchData() async {
@@ -70,9 +84,12 @@ class ReportsViewModel: ObservableObject {
         .execute()
         .value
 
+      self.salesCount = sales.count
       self.totalSales = sales.reduce(0) { $0 + $1.totalAmount }
       self.totalCosts = costs.reduce(0) { $0 + $1.amount }
       self.netProfit = totalSales - totalCosts
+      self.averageTicket = salesCount > 0 ? totalSales / Double(salesCount) : 0
+      self.profitMargin = totalSales > 0 ? netProfit / totalSales : 0
 
       print(
         "📊 [ReportsVM] Fetched \(sales.count) sales, \(costs.count) costs. Total: $\(totalSales), Net: $\(netProfit)"
@@ -84,9 +101,46 @@ class ReportsViewModel: ObservableObject {
         return calendar.date(from: components) ?? sale.createdAt
       }
 
-      self.salesData = groupedSales.map { (date, sales) in
-        DailySales(date: date, amount: sales.reduce(0) { $0 + $1.totalAmount })
-      }.sorted { $0.date < $1.date }
+      self.salesData =
+        groupedSales.map { (date, sales) in
+          DailySales(date: date, amount: sales.reduce(0) { $0 + $1.totalAmount })
+        }.sorted { $0.date < $1.date }
+
+      // KPI helpers
+      let daySpan = calendar.dateComponents([.day], from: startDate, to: now).day ?? 0
+      self.averageDailySales =
+        totalSales / Double(max(1, daySpan + 1))
+      self.bestDay = salesData.max(by: { $0.amount < $1.amount })
+
+      // Payment method breakdown
+      let paymentTotals = Dictionary(grouping: sales, by: { $0.paymentMethod }).map {
+        method, sales -> Breakdown in
+        let value = sales.reduce(0) { $0 + $1.totalAmount }
+        let percentage = totalSales > 0 ? value / totalSales : 0
+        return Breakdown(label: method, value: value, percentage: percentage)
+      }
+      .sorted { $0.value > $1.value }
+      self.paymentBreakdown = paymentTotals
+
+      // Location breakdown (market level pulse)
+      // Location breakdown (market level pulse)
+      let salesWithLocation = sales.filter {
+        guard
+          let location = $0.marketLocation?.trimmingCharacters(
+            in: CharacterSet.whitespacesAndNewlines), !location.isEmpty
+        else { return false }
+        return true
+      }
+
+      let locationTotals = Dictionary(grouping: salesWithLocation) { sale -> String in
+        return sale.marketLocation!.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+      }.map { location, sales -> Breakdown in
+        let value = sales.reduce(0) { $0 + $1.totalAmount }
+        let percentage = totalSales > 0 ? value / totalSales : 0
+        return Breakdown(label: location, value: value, percentage: percentage)
+      }
+      .sorted { $0.value > $1.value }
+      self.locationBreakdown = locationTotals
 
     } catch {
       print("❌ [ReportsVM] Error fetching reports data: \(error)")

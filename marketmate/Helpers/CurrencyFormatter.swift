@@ -7,7 +7,7 @@ struct CurrencyInputModifier: ViewModifier {
   func body(content: Content) -> some View {
     content
       .keyboardType(.decimalPad)
-      .onChange(of: text) { newValue in
+      .onChange(of: text) { _, newValue in
         // Allow only numbers and one decimal separator (. or ,)
         let filtered = newValue.filter { "0123456789.,".contains($0) }
 
