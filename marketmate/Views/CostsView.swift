@@ -4,9 +4,10 @@ import SwiftUI
 struct CostsView: View {
   @EnvironmentObject var costsVM: CostsViewModel
   @EnvironmentObject var profileVM: ProfileViewModel
+  @StateObject private var activityVM = ActivityViewModel()
   @State private var showingAddCost = false
   @State private var selectedCost: Cost?
-  @State private var activities: [Activity] = []
+  @State private var expandedActivityId: UUID?
   private let client = SupabaseService.shared.client
 
   var body: some View {
@@ -17,7 +18,7 @@ struct CostsView: View {
       VStack(spacing: 0) {
         // Header (Profile, Search, Reports)
         HStack(spacing: 12) {
-          Button(action: {}) {
+          NavigationLink(destination: ProfileView().environmentObject(profileVM)) {
             Image(systemName: "person.crop.circle.fill")
               .resizable()
               .frame(width: 40, height: 40)
@@ -51,48 +52,58 @@ struct CostsView: View {
         if costsVM.isLoading {
           ProgressView()
             .progressViewStyle(CircularProgressViewStyle(tint: .marketBlue))
-        } else if costsVM.costs.isEmpty {
-          VStack(spacing: 20) {
-            Image(systemName: "chart.pie")
-              .font(.system(size: 60))
-              .foregroundColor(.marketTextSecondary)
-            Text("No costs recorded")
-              .font(.title2)
-              .foregroundColor(.marketTextSecondary)
-            Button(action: { showingAddCost = true }) {
-              Text("Add a cost")
-                .primaryButtonStyle()
-                .frame(width: 200)
-            }
-          }
         } else {
           ScrollView {
             LazyVStack(spacing: 16) {
               // Recent Activity Section (Costs Only)
               VStack(alignment: .leading, spacing: 12) {
-                Text("Recent Activity")
-                  .font(.headline)
-                  .foregroundColor(.white)
+                HStack {
+                  Text("Recent Activity")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                  Spacer()
+                  NavigationLink(
+                    destination: ActivityHistoryView(initialFilter: .costs).environmentObject(
+                      profileVM)
+                  ) {
+                    Text("Show all")
+                      .font(.subheadline)
+                      .foregroundColor(.marketBlue)
+                  }
+                }
 
-                ForEach(activities.filter { $0.type == .cost }.prefix(5)) { activity in
-                  ActivityRow(
-                    activity: activity,
-                    currency: profileVM.currencySymbol
-                  )
+                ForEach(activityVM.activities.filter { $0.type == .cost }.prefix(3)) { activity in
+                  VStack(spacing: 0) {
+                    ActivityRow(
+                      activity: activity,
+                      currency: profileVM.currencySymbol
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                      withAnimation {
+                        if expandedActivityId == activity.id {
+                          expandedActivityId = nil
+                          activityVM.expandedDetails = nil
+                        } else {
+                          expandedActivityId = activity.id
+                          Task {
+                            await activityVM.fetchDetails(for: activity)
+                          }
+                        }
+                      }
+                    }
+
+                    if expandedActivityId == activity.id {
+                      ExpandedActivityView(
+                        activity: activity,
+                        viewModel: activityVM,
+                        onEdit: { _ in }  // Editing not implemented in CostsView for now
+                      )
+                    }
+                  }
                 }
               }
               .padding(.horizontal)
-
-              Divider()
-                .background(Color.white.opacity(0.2))
-                .padding()
-
-              ForEach(costsVM.costs) { cost in
-                NavigationLink(destination: CostDetailView(cost: cost).environmentObject(costsVM)) {
-                  CostRowView(cost: cost)
-                    .environmentObject(costsVM)
-                }
-              }
             }
             .padding()
           }
@@ -126,30 +137,11 @@ struct CostsView: View {
       Task {
         await costsVM.fetchCosts()
         await costsVM.fetchCategories()
-        await fetchActivities()
+        await activityVM.fetchActivities()
       }
     }
   }
 
-  func fetchActivities() async {
-    guard let userId = client.auth.currentUser?.id else { return }
-
-    do {
-      let fetchedActivities: [Activity] =
-        try await client
-        .from("recent_activity")
-        .select()
-        .eq("user_id", value: userId)
-        .order("created_at", ascending: false)
-        .limit(20)
-        .execute()
-        .value
-
-      self.activities = fetchedActivities
-    } catch {
-      print("❌ [CostsView] Error fetching activities: \(error)")
-    }
-  }
 }
 
 struct CostRowView: View {

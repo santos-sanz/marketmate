@@ -26,7 +26,7 @@ struct InventoryView: View {
       VStack(spacing: 0) {
         // Header (Profile, Search, Reports)
         HStack(spacing: 12) {
-          Button(action: {}) {
+          NavigationLink(destination: ProfileView().environmentObject(profileVM)) {
             Image(systemName: "person.crop.circle.fill")
               .resizable()
               .frame(width: 40, height: 40)
@@ -79,27 +79,6 @@ struct InventoryView: View {
           }
         } else {
           List {
-            Section {
-              // Recent Activity Section (Products Only)
-              VStack(alignment: .leading, spacing: 12) {
-                Text("Recent Activity")
-                  .font(.headline)
-                  .foregroundColor(.white)
-
-                ForEach(
-                  activities.filter {
-                    [.productCreated, .productUpdated, .productDeleted].contains($0.type)
-                  }.prefix(5)
-                ) { activity in
-                  ActivityRow(
-                    activity: activity,
-                    currency: profileVM.currencySymbol
-                  )
-                }
-              }
-              .listRowBackground(Color.clear)
-            }
-
             ForEach(filteredProducts) { product in
               NavigationLink(
                 destination: ProductDetailView(product: product).environmentObject(inventoryVM)
@@ -116,6 +95,38 @@ struct InventoryView: View {
                   await inventoryVM.deleteProduct(id: filteredProducts[index].id)
                 }
               }
+            }
+
+            Section {
+              // Recent Activity Section (Products Only)
+              VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                  Text("Recent Activity")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                  Spacer()
+                  NavigationLink(
+                    destination: ActivityHistoryView(initialFilter: .products).environmentObject(
+                      profileVM)
+                  ) {
+                    Text("Show all")
+                      .font(.subheadline)
+                      .foregroundColor(.marketBlue)
+                  }
+                }
+
+                ForEach(
+                  activities.filter {
+                    [.productCreated, .productUpdated, .productDeleted].contains($0.type)
+                  }.prefix(3)
+                ) { activity in
+                  ActivityRow(
+                    activity: activity,
+                    currency: profileVM.currencySymbol
+                  )
+                }
+              }
+              .listRowBackground(Color.clear)
             }
           }
           .listStyle(.plain)

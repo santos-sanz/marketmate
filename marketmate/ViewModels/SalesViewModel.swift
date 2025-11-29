@@ -23,6 +23,10 @@ class SalesViewModel: ObservableObject {
     cartItems.reduce(0) { $0 + ($1.price * Double($1.quantity)) }
   }
 
+  func quantityInCart(for product: Product) -> Int {
+    cartItems.first(where: { $0.product?.id == product.id })?.quantity ?? 0
+  }
+
   func addToCart(product: Product) {
     if let index = cartItems.firstIndex(where: { $0.product?.id == product.id }) {
       cartItems[index].quantity += 1

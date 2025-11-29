@@ -39,7 +39,7 @@ struct SalesView: View {
       VStack(spacing: 0) {
         // Header (Profile, Search, Market)
         HStack(spacing: 12) {
-          Button(action: {}) {
+          NavigationLink(destination: ProfileView().environmentObject(profileVM)) {
             Image(systemName: "person.crop.circle.fill")
               .resizable()
               .frame(width: 40, height: 40)
@@ -125,7 +125,8 @@ struct SalesView: View {
                 .cornerRadius(CornerRadius.sm)
               }
 
-              ForEach(filteredProducts) { product in
+              // Show only first 8 products
+              ForEach(filteredProducts.prefix(8)) { product in
                 ProductCard(
                   product: product,
                   action: {
@@ -133,17 +134,50 @@ struct SalesView: View {
                   }, isSelected: false
                 )
               }
+
+              // View All Button (if more than 8 products)
+              if filteredProducts.count > 8 {
+                NavigationLink(
+                  destination: AllProductsView().environmentObject(inventoryVM).environmentObject(
+                    salesVM
+                  ).environmentObject(profileVM)
+                ) {
+                  VStack(spacing: 4) {
+                    Image(systemName: "square.grid.2x2")
+                      .font(.title2)
+                      .foregroundColor(.white)
+                    Text("View All")
+                      .font(Typography.caption1)
+                      .foregroundColor(.white)
+                  }
+                  .frame(height: 80)
+                  .frame(maxWidth: .infinity)
+                  .background(Color.white.opacity(0.1))
+                  .cornerRadius(CornerRadius.sm)
+                }
+              }
             }
             .padding(.horizontal, Spacing.sm)
 
             // Recent Activity Section (Sales Only)
             VStack(alignment: .leading, spacing: Spacing.sm) {
-              Text("Recent Activity")
-                .font(Typography.headline)
-                .foregroundColor(.white)
-                .padding(.horizontal, Spacing.sm)
+              HStack {
+                Text("Recent Activity")
+                  .font(Typography.headline)
+                  .foregroundColor(.white)
+                Spacer()
+                NavigationLink(
+                  destination: ActivityHistoryView(initialFilter: .sales).environmentObject(
+                    profileVM)
+                ) {
+                  Text("Show all")
+                    .font(.subheadline)
+                    .foregroundColor(.marketBlue)
+                }
+              }
+              .padding(.horizontal, Spacing.sm)
 
-              ForEach(activities.filter { $0.type == .sale }.prefix(5)) { activity in
+              ForEach(activities.filter { $0.type == .sale }.prefix(3)) { activity in
                 ActivityRow(
                   activity: activity,
                   currency: profileVM.currencySymbol
@@ -157,44 +191,57 @@ struct SalesView: View {
 
         // Cart Summary
         if !salesVM.cartItems.isEmpty {
-          VStack(spacing: Spacing.sm) {
-            HStack {
-              Text("Total:")
-                .font(Typography.title3)
-                .foregroundColor(.white)
-              Spacer()
-              Text("\(profileVM.currencySymbol) \(String(format: "%.2f", salesVM.cartTotal))")
-                .font(Typography.display)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-            }
-            .padding(.horizontal, Spacing.md)
-            .padding(.top, Spacing.sm)
+          VStack(spacing: 0) {
+            HStack(alignment: .center) {
+              VStack(alignment: .leading, spacing: 2) {
+                Text("\(salesVM.cartItems.reduce(0) { $0 + $1.quantity }) items")
+                  .font(.caption)
+                  .fontWeight(.medium)
+                  .foregroundColor(.white.opacity(0.8))
 
-            Button(action: {
-              print("🛒 [SalesView] Checkout button pressed. Cart total: \(salesVM.cartTotal)")
-              showingCheckout = true
-            }) {
-              Text("Checkout")
-                .font(Typography.headline)
-                .fontWeight(.semibold)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(Spacing.md)
-                .background(Color.marketBlue)
-                .cornerRadius(CornerRadius.xl)
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                  Text("Total")
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.8))
+
+                  Text("\(profileVM.currencySymbol) \(String(format: "%.2f", salesVM.cartTotal))")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                }
+              }
+
+              Spacer()
+
+              Button(action: {
+                print("🛒 [SalesView] Checkout button pressed. Cart total: \(salesVM.cartTotal)")
+                showingCheckout = true
+              }) {
+                HStack {
+                  Text("Checkout")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                  Image(systemName: "arrow.right")
+                    .font(.headline)
+                }
+                .foregroundColor(.marketBlue)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 20)
+                .background(Color.white)
+                .cornerRadius(30)
+              }
             }
-            .padding(.horizontal, Spacing.md)
-            .padding(.bottom, Spacing.md)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 16)
+            .padding(.bottom, 8)  // Extra padding for safe area if needed
           }
           .background(
-            Color.marketBlue.opacity(0.5)
-              .background(.ultraThinMaterial)
+            Rectangle()
+              .fill(.ultraThinMaterial)
+              .overlay(Color.black.opacity(0.2))
           )
-          .cornerRadius(20, corners: [.topLeft, .topRight])
-          .shadow(
-            color: Shadow.floating.color, radius: Shadow.floating.radius, x: Shadow.floating.x,
-            y: Shadow.floating.y)
+          .cornerRadius(24, corners: [.topLeft, .topRight])
+          .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: -5)
         }
       }
 
