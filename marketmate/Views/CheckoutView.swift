@@ -4,7 +4,7 @@ struct CheckoutView: View {
   @EnvironmentObject var salesVM: SalesViewModel
   @EnvironmentObject var marketSession: MarketSessionManager
   @EnvironmentObject var profileVM: ProfileViewModel
-  @Environment(\.presentationMode) var presentationMode
+  @Environment(\.dismiss) var dismiss
 
   @State private var paymentMethod = "Cash"
   @State private var cashReceived = ""
@@ -206,15 +206,6 @@ struct CheckoutView: View {
       }
     }
     .navigationTitle("Checkout")
-    .onAppear {
-      print("🛒 [CheckoutView] onAppear called")
-      print("🛒 [CheckoutView] Cart items: \(salesVM.cartItems.count)")
-      print("🛒 [CheckoutView] Cart total: \(salesVM.cartTotal)")
-      print("🛒 [CheckoutView] Active market: \(marketSession.activeMarket != nil ? "Yes" : "No")")
-      if let error = salesVM.errorMessage {
-        print("❌ [CheckoutView] SalesVM error: \(error)")
-      }
-    }
     .alert("Error", isPresented: .constant(salesVM.errorMessage != nil)) {
       Button("OK") {
         salesVM.errorMessage = nil
@@ -225,7 +216,6 @@ struct CheckoutView: View {
   }
 
   private func confirmSale() {
-    print("Confirm sale pressed. Payment Method: \(paymentMethod), Total: \(finalTotal)")
     var items = salesVM.cartItems.map { cartItem in
       SaleItem(
         id: UUID(),  // Placeholder, handled in VM
@@ -263,7 +253,7 @@ struct CheckoutView: View {
         marketLocation: marketSession.activeMarket?.location
       )
       salesVM.clearCart()
-      presentationMode.wrappedValue.dismiss()
+      dismiss()
     }
   }
 }

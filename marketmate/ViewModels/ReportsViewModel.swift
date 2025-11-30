@@ -10,7 +10,7 @@ enum TimeRange: String, CaseIterable {
 }
 
 @MainActor
-class ReportsViewModel: ObservableObject {
+final class ReportsViewModel: ObservableObject {
   @Published var totalSales: Double = 0
   @Published var totalCosts: Double = 0
   @Published var netProfit: Double = 0
@@ -41,43 +41,26 @@ class ReportsViewModel: ObservableObject {
   }
 
   func fetchData() async {
-    print("📊 [ReportsVM] Fetching reports data for \(selectedTimeRange.rawValue)...")
     isLoading = true
+    defer { isLoading = false }
 
-    // Calculate start date based on selectedTimeRange
     let calendar = Calendar.current
     let now = Date()
-    var startDate: Date
+    guard let startDate = startDate(from: now, calendar: calendar) else { return }
 
-    switch selectedTimeRange {
-    case .day:
-      startDate = calendar.startOfDay(for: now)
-    case .week:
-      startDate = calendar.date(byAdding: .day, value: -7, to: now)!
-    case .month:
-      startDate = calendar.date(byAdding: .month, value: -1, to: now)!
-    case .year:
-      startDate = calendar.date(byAdding: .year, value: -1, to: now)!
-    }
-
-    // Format date for Supabase query (ISO8601)
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
     let startDateString = formatter.string(from: startDate)
 
     do {
-      // Fetch Sales
-      let sales: [Sale] =
-        try await client
+      let sales: [Sale] = try await client
         .from("sales")
         .select()
         .gte("created_at", value: startDateString)
         .execute()
         .value
 
-      // Fetch Costs
-      let costs: [Cost] =
-        try await client
+      let costs: [Cost] = try await client
         .from("costs")
         .select()
         .gte("created_at", value: startDateString)
@@ -91,11 +74,6 @@ class ReportsViewModel: ObservableObject {
       self.averageTicket = salesCount > 0 ? totalSales / Double(salesCount) : 0
       self.profitMargin = totalSales > 0 ? netProfit / totalSales : 0
 
-      print(
-        "📊 [ReportsVM] Fetched \(sales.count) sales, \(costs.count) costs. Total: $\(totalSales), Net: $\(netProfit)"
-      )
-
-      // Group sales by date for the chart
       let groupedSales = Dictionary(grouping: sales) { sale -> Date in
         let components = calendar.dateComponents([.year, .month, .day], from: sale.createdAt)
         return calendar.date(from: components) ?? sale.createdAt
@@ -112,7 +90,6 @@ class ReportsViewModel: ObservableObject {
         totalSales / Double(max(1, daySpan + 1))
       self.bestDay = salesData.max(by: { $0.amount < $1.amount })
 
-      // Payment method breakdown
       let paymentTotals = Dictionary(grouping: sales, by: { $0.paymentMethod }).map {
         method, sales -> Breakdown in
         let value = sales.reduce(0) { $0 + $1.totalAmount }
@@ -143,9 +120,20 @@ class ReportsViewModel: ObservableObject {
       self.locationBreakdown = locationTotals
 
     } catch {
-      print("❌ [ReportsVM] Error fetching reports data: \(error)")
+      // Keep previous data if the request fails
     }
+  }
 
-    isLoading = false
+  private func startDate(from now: Date, calendar: Calendar) -> Date? {
+    switch selectedTimeRange {
+    case .day:
+      return calendar.startOfDay(for: now)
+    case .week:
+      return calendar.date(byAdding: .day, value: -7, to: now)
+    case .month:
+      return calendar.date(byAdding: .month, value: -1, to: now)
+    case .year:
+      return calendar.date(byAdding: .year, value: -1, to: now)
+    }
   }
 }

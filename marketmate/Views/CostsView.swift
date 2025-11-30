@@ -1,4 +1,3 @@
-import Supabase
 import SwiftUI
 
 struct CostsView: View {
@@ -6,9 +5,7 @@ struct CostsView: View {
   @EnvironmentObject var profileVM: ProfileViewModel
   @StateObject private var activityVM = ActivityViewModel()
   @State private var showingAddCost = false
-  @State private var selectedCost: Cost?
   @State private var expandedActivityId: UUID?
-  private let client = SupabaseService.shared.client
 
   var body: some View {
     ZStack {

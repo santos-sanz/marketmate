@@ -3,7 +3,7 @@ import CoreLocation
 import Foundation
 
 @MainActor
-class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
   private let locationManager = CLLocationManager()
   @Published var location: CLLocation?
   @Published var authorizationStatus: CLAuthorizationStatus?
@@ -37,7 +37,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
   }
 
   func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-    print("Location manager failed with error: \(error.localizedDescription)")
+    // Keep silent to avoid spamming logs; UI can observe nil location if needed.
   }
 
   func reverseGeocode(location: CLLocation) async -> String? {
@@ -49,7 +49,6 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
       }
       return nil
     } catch {
-      print("Reverse geocoding failed: \(error.localizedDescription)")
       return nil
     }
   }

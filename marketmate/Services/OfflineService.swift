@@ -1,6 +1,6 @@
 import Foundation
 
-class OfflineService {
+final class OfflineService {
   static let shared = OfflineService()
 
   private init() {}

@@ -1,4 +1,3 @@
-import Supabase
 import SwiftUI
 
 struct InventoryView: View {
@@ -8,7 +7,6 @@ struct InventoryView: View {
   @State private var searchText = ""
   @State private var selectedProduct: Product?
   @State private var activities: [Activity] = []
-  private let client = SupabaseService.shared.client
 
   var filteredProducts: [Product] {
     if searchText.isEmpty {
@@ -78,29 +76,26 @@ struct InventoryView: View {
             }
           }
         } else {
-          List {
-            ForEach(filteredProducts) { product in
-              NavigationLink(value: product) {
-                ProductRowView(product: product)
-              }
-              .listRowBackground(Color.marketCard)
-              .listRowSeparator(.hidden)
-              .padding(.vertical, 4)
-            }
-            .onDelete { indexSet in
-              Task {
-                for index in indexSet {
-                  await inventoryVM.deleteProduct(id: filteredProducts[index].id)
+          ScrollView {
+            VStack(spacing: Spacing.md) {
+              // Products Grid (2 columns for inventory)
+              LazyVGrid(
+                columns: [GridItem(.flexible()), GridItem(.flexible())],
+                spacing: Spacing.xs
+              ) {
+                ForEach(filteredProducts) { product in
+                  NavigationLink(value: product) {
+                    InventoryProductCard(product: product)
+                  }
                 }
               }
-            }
+              .padding(.horizontal, Spacing.sm)
 
-            Section {
               // Recent Activity Section (Products Only)
-              VStack(alignment: .leading, spacing: 12) {
+              VStack(alignment: .leading, spacing: Spacing.sm) {
                 HStack {
                   Text("Recent Activity")
-                    .font(.headline)
+                    .font(Typography.headline)
                     .foregroundColor(.white)
                   Spacer()
                   NavigationLink(
@@ -112,6 +107,7 @@ struct InventoryView: View {
                       .foregroundColor(.marketBlue)
                   }
                 }
+                .padding(.horizontal, Spacing.sm)
 
                 ForEach(
                   activities.filter {
@@ -124,12 +120,10 @@ struct InventoryView: View {
                   )
                 }
               }
-              .listRowBackground(Color.clear)
+              .padding(.horizontal, Spacing.sm)
+              .padding(.bottom, 100)  // Space for FAB
             }
           }
-          .listStyle(.plain)
-          .scrollContentBackground(.hidden)
-          .background(Color.clear)
         }
 
         // Floating Action Button
@@ -169,59 +163,38 @@ struct InventoryView: View {
   }
 
   func fetchActivities() async {
-    guard let userId = client.auth.currentUser?.id else { return }
-
     do {
-      let fetchedActivities: [Activity] =
-        try await client
-        .from("recent_activity")
-        .select()
-        .eq("user_id", value: userId)
-        .order("created_at", ascending: false)
-        .limit(20)
-        .execute()
-        .value
-
-      self.activities = fetchedActivities
+      activities = try await ActivityService.fetchRecent(limit: 20)
     } catch {
-      print("❌ [InventoryView] Error fetching activities: \(error)")
+      activities = []
     }
   }
 }
 
-struct ProductRowView: View {
+struct InventoryProductCard: View {
   let product: Product
   @EnvironmentObject var profileVM: ProfileViewModel
 
   var body: some View {
-    HStack {
-      VStack(alignment: .leading, spacing: 4) {
-        Text(product.name)
-          .font(.headline)
-          .foregroundColor(.white)
+    VStack(alignment: .leading, spacing: Spacing.xs) {
+      Text(product.name)
+        .font(Typography.headline)
+        .foregroundColor(.white)
+        .lineLimit(2)
+        .frame(maxWidth: .infinity, alignment: .leading)
 
-        if let description = product.description {
-          Text(description)
-            .font(.caption)
-            .foregroundColor(.marketTextSecondary)
-            .lineLimit(1)
-        }
-      }
       Spacer()
 
-      VStack(alignment: .trailing) {
-        Text("\(profileVM.currencySymbol) \(String(format: "%.2f", product.price))")
-          .font(.headline)
-          .foregroundColor(.white)
-
-        if let stock = product.stockQuantity {
-          Text("\(stock) in stock")
-            .font(.caption)
-            .foregroundColor(stock > 0 ? .marketTextSecondary : .red)
-        }
+      if let stock = product.stockQuantity {
+        Text("\(stock) in stock")
+          .font(Typography.body)
+          .fontWeight(.semibold)
+          .foregroundColor(stock > 0 ? .marketTextSecondary : .red)
       }
     }
-    .padding()
-    .marketCardStyle()
+    .frame(height: 90)
+    .padding(Spacing.sm)
+    .background(Color.marketCard)
+    .cornerRadius(CornerRadius.sm)
   }
 }

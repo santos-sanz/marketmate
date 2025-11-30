@@ -4,7 +4,7 @@ import Supabase
 import SwiftUI
 
 @MainActor
-class ActivityViewModel: ObservableObject {
+final class ActivityViewModel: ObservableObject {
   @Published var activities: [Activity] = []
   @Published var filteredActivities: [Activity] = []
   @Published var isLoading = false
@@ -44,31 +44,16 @@ class ActivityViewModel: ObservableObject {
   @Published var selectedDateFilter: DateFilter = .allTime { didSet { applyFilter() } }
   @Published var searchText: String = "" { didSet { applyFilter() } }
   func fetchActivities() async {
-    guard let userId = client.auth.currentUser?.id else { return }
-
     isLoading = true
     errorMessage = nil
+    defer { isLoading = false }
 
     do {
-      let fetchedActivities: [Activity] =
-        try await client
-        .from("recent_activity")
-        .select()
-        .eq("user_id", value: userId)
-        .order("created_at", ascending: false)
-        .limit(100)  // Fetch more for history view
-        .execute()
-        .value
-
-      self.activities = fetchedActivities
+      activities = try await ActivityService.fetchRecent(limit: 100)
       applyFilter()
-      print("✅ [ActivityViewModel] Fetched \(fetchedActivities.count) activities")
     } catch {
-      print("❌ [ActivityViewModel] Error fetching activities: \(error)")
-      self.errorMessage = "Failed to load activities"
+      self.errorMessage = error.localizedDescription
     }
-
-    isLoading = false
   }
 
   private func applyFilter() {
@@ -173,14 +158,10 @@ class ActivityViewModel: ObservableObject {
           .execute()
           .value
         expandedDetails = .market(market)
-
-      default:
-        break
       }
     } catch {
-      print("❌ [ActivityViewModel] Error fetching details: \(error)")
+      errorMessage = "Failed to load activity details"
     }
-
     isLoadingDetails = false
   }
   // Helper to group activities by date

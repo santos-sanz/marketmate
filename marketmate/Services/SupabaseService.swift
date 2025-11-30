@@ -1,7 +1,7 @@
 import Foundation
 import Supabase
 
-class SupabaseService {
+final class SupabaseService {
   static let shared = SupabaseService()
 
   let client: SupabaseClient

@@ -1,13 +1,14 @@
 import CoreLocation
-import Supabase
 import SwiftUI
 
 struct SalesView: View {
   @EnvironmentObject var salesVM: SalesViewModel
   @EnvironmentObject var inventoryVM: InventoryViewModel
+  @EnvironmentObject var costsVM: CostsViewModel
   @StateObject private var marketSession = MarketSessionManager()
   @StateObject private var locationManager = LocationManager()
   @EnvironmentObject var profileVM: ProfileViewModel
+
   @State private var showingCheckout = false
   @State private var showingStartMarket = false
   @State private var showingCustomAmount = false
@@ -16,9 +17,8 @@ struct SalesView: View {
   @State private var marketLocation = ""
   @State private var searchText = ""
   @State private var activities: [Activity] = []
-  private let client = SupabaseService.shared.client
 
-  var filteredProducts: [Product] {
+  private var filteredProducts: [Product] {
     if searchText.isEmpty {
       return inventoryVM.products
     } else {
@@ -26,222 +26,24 @@ struct SalesView: View {
     }
   }
 
-  let columns = [
-    GridItem(.flexible()),
-    GridItem(.flexible()),
-  ]
-
   var body: some View {
     ZStack {
-      // Gradient Background
       Color.clear.revolutBackground()
 
       VStack(spacing: 0) {
-        // Header (Profile, Search, Market)
-        HStack(spacing: 12) {
-          NavigationLink(destination: ProfileView().environmentObject(profileVM)) {
-            Image(systemName: "person.crop.circle.fill")
-              .resizable()
-              .frame(width: 40, height: 40)
-              .foregroundColor(.marketTextSecondary)
-          }
-
-          // Search Bar
-          HStack {
-            Image(systemName: "magnifyingglass")
-              .foregroundColor(.marketTextSecondary)
-            TextField("Search", text: $searchText)
-              .foregroundColor(.white)
-              .accentColor(.white)
-              .placeholder(when: searchText.isEmpty) {
-                Text("Search").foregroundColor(.white)
-              }
-          }
-          .searchBarStyle()
-
-          Button(action: {
-            locationManager.requestPermission()
-            locationManager.startUpdatingLocation()
-            showingStartMarket = true
-          }) {
-            Image(systemName: "tent.fill")
-              .foregroundColor(.white)
-              .font(Typography.title2)
-          }
-        }
-        .padding(.horizontal)
-        .padding(.top, 10)
-        .padding(.bottom, 8)
-
-        // Market Status Banner
+        header
         if let market = marketSession.activeMarket {
-          HStack {
-            Image(systemName: "tent.fill")
-              .foregroundColor(.white)
-            Text("Open Market: \(market.location ?? "Unknown")")
-              .font(.headline)
-              .foregroundColor(.white)
-            Spacer()
-            Button(action: { Task { await marketSession.endMarket() } }) {
-              Text("End")
-                .font(.caption)
-                .bold()
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Color.white.opacity(0.2))
-                .foregroundColor(.white)
-                .cornerRadius(12)
-            }
-          }
-          .padding()
-          .background(Color.marketBlue.opacity(0.8))
-          .cornerRadius(12)
-          .padding(.horizontal)
+          marketBanner(for: market)
         }
-
-        // Products Grid & Recent Sales
         ScrollView {
           VStack(spacing: Spacing.md) {
-            // Products Grid
-            LazyVGrid(
-              columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())],
-              spacing: Spacing.xs
-            ) {  // 3 columns for compactness
-              // Custom Amount Button
-              Button(action: {
-                showingCustomAmount = true
-              }) {
-                VStack(spacing: 4) {
-                  Image(systemName: "keyboard")
-                    .font(.title2)
-                    .foregroundColor(.white)
-                  Text("Custom")
-                    .font(Typography.caption1)
-                    .foregroundColor(.white)
-                }
-                .frame(height: 80)
-                .frame(maxWidth: .infinity)
-                .background(Color.marketBlue.opacity(0.6))
-                .cornerRadius(CornerRadius.sm)
-              }
-
-              // Show only first 8 products
-              ForEach(filteredProducts.prefix(8)) { product in
-                ProductCard(
-                  product: product,
-                  action: {
-                    salesVM.addToCart(product: product)
-                  }, isSelected: false
-                )
-              }
-
-              // View All Button (if more than 8 products)
-              if filteredProducts.count > 8 {
-                NavigationLink(
-                  destination: AllProductsView().environmentObject(inventoryVM).environmentObject(
-                    salesVM
-                  ).environmentObject(profileVM)
-                ) {
-                  VStack(spacing: 4) {
-                    Image(systemName: "square.grid.2x2")
-                      .font(.title2)
-                      .foregroundColor(.white)
-                    Text("View All")
-                      .font(Typography.caption1)
-                      .foregroundColor(.white)
-                  }
-                  .frame(height: 80)
-                  .frame(maxWidth: .infinity)
-                  .background(Color.white.opacity(0.1))
-                  .cornerRadius(CornerRadius.sm)
-                }
-              }
-            }
-            .padding(.horizontal, Spacing.sm)
-
-            // Recent Activity Section (Sales Only)
-            VStack(alignment: .leading, spacing: Spacing.sm) {
-              HStack {
-                Text("Recent Activity")
-                  .font(Typography.headline)
-                  .foregroundColor(.white)
-                Spacer()
-                NavigationLink(
-                  destination: ActivityHistoryView(initialFilter: .sales).environmentObject(
-                    profileVM)
-                ) {
-                  Text("Show all")
-                    .font(.subheadline)
-                    .foregroundColor(.marketBlue)
-                }
-              }
-              .padding(.horizontal, Spacing.sm)
-
-              ForEach(activities.filter { $0.type == .sale }.prefix(3)) { activity in
-                ActivityRow(
-                  activity: activity,
-                  currency: profileVM.currencySymbol
-                )
-              }
-            }
-            .padding(.horizontal, Spacing.sm)
-            .padding(.bottom, 100)  // Space for cart summary
+            productGrid
+            salesActivity
           }
         }
 
-        // Cart Summary
         if !salesVM.cartItems.isEmpty {
-          VStack(spacing: 0) {
-            HStack(alignment: .center) {
-              VStack(alignment: .leading, spacing: 2) {
-                Text("\(salesVM.cartItems.reduce(0) { $0 + $1.quantity }) items")
-                  .font(.caption)
-                  .fontWeight(.medium)
-                  .foregroundColor(.white.opacity(0.8))
-
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                  Text("Total")
-                    .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.8))
-
-                  Text("\(profileVM.currencySymbol) \(String(format: "%.2f", salesVM.cartTotal))")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                }
-              }
-
-              Spacer()
-
-              Button(action: {
-                print("🛒 [SalesView] Checkout button pressed. Cart total: \(salesVM.cartTotal)")
-                showingCheckout = true
-              }) {
-                HStack {
-                  Text("Checkout")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                  Image(systemName: "arrow.right")
-                    .font(.headline)
-                }
-                .foregroundColor(.marketBlue)
-                .padding(.vertical, 12)
-                .padding(.horizontal, 20)
-                .background(Color.white)
-                .cornerRadius(30)
-              }
-            }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 16)
-            .padding(.bottom, 8)  // Extra padding for safe area if needed
-          }
-          .background(
-            Rectangle()
-              .fill(.ultraThinMaterial)
-              .overlay(Color.black.opacity(0.2))
-          )
-          .cornerRadius(24, corners: [.topLeft, .topRight])
-          .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: -5)
+          cartSummary
         }
       }
 
@@ -264,104 +66,12 @@ struct SalesView: View {
         )
       }
     }
-    .sheet(isPresented: $showingCustomAmount) {
-      ZStack {
-        Color.marketBlue.edgesIgnoringSafeArea(.all)
-
-        VStack(spacing: 24) {
-          Text("Add Custom Amount")
-            .font(Typography.title3)
-            .foregroundColor(.white)
-            .bold()
-
-          VStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 8) {
-              Text("Amount")
-                .font(Typography.caption1)
-                .foregroundColor(.marketTextSecondary)
-
-              HStack {
-                Text(profileVM.currencySymbol)
-                  .foregroundColor(.white)
-                  .font(.title2)
-                TextField("\(profileVM.currencySymbol) 0.00", text: $customAmount)
-                  .currencyInput(text: $customAmount)
-                  .foregroundColor(.white)
-                  .font(.title2)
-              }
-              .padding()
-              .background(Color.marketCard)
-              .cornerRadius(12)
-            }
-
-            VStack(alignment: .leading, spacing: 8) {
-              Text("Description")
-                .font(Typography.caption1)
-                .foregroundColor(.marketTextSecondary)
-
-              TextField("Item Name", text: $customDescription)
-                .foregroundColor(.white)
-                .padding()
-                .background(Color.marketCard)
-                .cornerRadius(12)
-            }
-          }
-
-          HStack(spacing: 16) {
-            Button(action: {
-              showingCustomAmount = false
-              customAmount = ""
-              customDescription = ""
-            }) {
-              Text("Cancel")
-                .font(Typography.body)
-                .foregroundColor(.marketTextSecondary)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.marketCard)
-                .cornerRadius(12)
-            }
-
-            Button(action: {
-              if let amount = Double(customAmount) {
-                salesVM.addCustomAmount(
-                  name: customDescription.isEmpty ? "Custom Amount" : customDescription,
-                  price: amount
-                )
-                showingCustomAmount = false
-                customAmount = ""
-                customDescription = ""
-              }
-            }) {
-              Text("Add")
-                .font(Typography.body)
-                .bold()
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.white.opacity(0.2))
-                .cornerRadius(12)
-                .overlay(
-                  RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.5), lineWidth: 1)
-                )
-            }
-            .disabled(customAmount.isEmpty)
-            .opacity(customAmount.isEmpty ? 0.5 : 1.0)
-          }
-        }
-        .padding(24)
-      }
-      .presentationDetents([.medium])
-    }
+    .sheet(isPresented: $showingCustomAmount) { customAmountSheet }
     .navigationBarHidden(true)
     .navigationDestination(isPresented: $showingCheckout) {
       CheckoutView()
         .environmentObject(salesVM)
         .environmentObject(marketSession)
-        .onAppear {
-          print("🛒 [CheckoutView] View appeared successfully")
-        }
     }
     .onAppear {
       Task {
@@ -372,23 +82,297 @@ struct SalesView: View {
     }
   }
 
-  func fetchActivities() async {
-    guard let userId = client.auth.currentUser?.id else { return }
+  private var header: some View {
+    HStack(spacing: 12) {
+      NavigationLink(destination: ProfileView().environmentObject(profileVM)) {
+        Image(systemName: "person.crop.circle.fill")
+          .resizable()
+          .frame(width: 40, height: 40)
+          .foregroundColor(.marketTextSecondary)
+      }
 
+      HStack {
+        Image(systemName: "magnifyingglass")
+          .foregroundColor(.marketTextSecondary)
+        TextField("Search", text: $searchText)
+          .foregroundColor(.white)
+          .accentColor(.white)
+          .placeholder(when: searchText.isEmpty) {
+            Text("Search").foregroundColor(.white)
+          }
+      }
+      .searchBarStyle()
+
+      Button(action: {
+        locationManager.requestPermission()
+        locationManager.startUpdatingLocation()
+        showingStartMarket = true
+      }) {
+        Image(systemName: "tent.fill")
+          .foregroundColor(.white)
+          .font(Typography.title2)
+      }
+    }
+    .padding(.horizontal)
+    .padding(.top, 10)
+    .padding(.bottom, 8)
+  }
+
+  private func marketBanner(for market: Market) -> some View {
+    HStack {
+      Image(systemName: "tent.fill")
+        .foregroundColor(.white)
+      Text("Open Market: \(market.location ?? "Unknown")")
+        .font(.headline)
+        .foregroundColor(.white)
+      Spacer()
+      Button(action: { Task { await marketSession.endMarket() } }) {
+        Text("End")
+          .font(.caption)
+          .bold()
+          .padding(.horizontal, 12)
+          .padding(.vertical, 6)
+          .background(Color.white.opacity(0.2))
+          .foregroundColor(.white)
+          .cornerRadius(12)
+      }
+    }
+    .padding()
+    .background(Color.marketBlue.opacity(0.8))
+    .cornerRadius(12)
+    .padding(.horizontal)
+  }
+
+  private var productGrid: some View {
+    LazyVGrid(
+      columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())],
+      spacing: Spacing.xs
+    ) {
+      Button(action: { showingCustomAmount = true }) {
+        VStack(spacing: 4) {
+          Image(systemName: "keyboard")
+            .font(.title2)
+            .foregroundColor(.white)
+          Text("Custom")
+            .font(Typography.caption1)
+            .foregroundColor(.white)
+        }
+        .frame(height: 85)
+        .frame(maxWidth: .infinity)
+        .background(Color.marketBlue.opacity(0.6))
+        .cornerRadius(CornerRadius.sm)
+      }
+
+      ForEach(filteredProducts.prefix(8)) { product in
+        ProductCard(
+          product: product,
+          action: { salesVM.addToCart(product: product) }
+        )
+        .environmentObject(profileVM)
+      }
+
+      if filteredProducts.count > 8 {
+        NavigationLink(
+          destination: AllProductsView()
+            .environmentObject(inventoryVM)
+            .environmentObject(salesVM)
+            .environmentObject(profileVM)
+        ) {
+          VStack(spacing: 4) {
+            Image(systemName: "square.grid.2x2")
+              .font(.title2)
+              .foregroundColor(.white)
+            Text("View All")
+              .font(Typography.caption1)
+              .foregroundColor(.white)
+          }
+          .frame(height: 85)
+          .frame(maxWidth: .infinity)
+          .background(Color.white.opacity(0.1))
+          .cornerRadius(CornerRadius.sm)
+        }
+      }
+    }
+    .padding(.horizontal, Spacing.sm)
+  }
+
+  private var salesActivity: some View {
+    VStack(alignment: .leading, spacing: Spacing.sm) {
+      HStack {
+        Text("Recent Activity")
+          .font(Typography.headline)
+          .foregroundColor(.white)
+        Spacer()
+        NavigationLink(
+          destination: ActivityHistoryView(initialFilter: .sales).environmentObject(profileVM)
+        ) {
+          Text("Show all")
+            .font(.subheadline)
+            .foregroundColor(.marketBlue)
+        }
+      }
+      .padding(.horizontal, Spacing.sm)
+
+      ForEach(activities.filter { $0.type == .sale }.prefix(3)) { activity in
+        ActivityRow(
+          activity: activity,
+          currency: profileVM.currencySymbol
+        )
+      }
+    }
+    .padding(.horizontal, Spacing.sm)
+    .padding(.bottom, 100)
+  }
+
+  private var cartSummary: some View {
+    VStack(spacing: 0) {
+      HStack(alignment: .center) {
+        VStack(alignment: .leading, spacing: 2) {
+          Text("\(salesVM.cartItems.reduce(0) { $0 + $1.quantity }) items")
+            .font(.caption)
+            .fontWeight(.medium)
+            .foregroundColor(.white.opacity(0.8))
+
+          HStack(alignment: .firstTextBaseline, spacing: 4) {
+            Text("Total")
+              .font(.subheadline)
+              .foregroundColor(.white.opacity(0.8))
+
+            Text("\(profileVM.currencySymbol) \(String(format: "%.2f", salesVM.cartTotal))")
+              .font(.title2)
+              .fontWeight(.bold)
+              .foregroundColor(.white)
+          }
+        }
+
+        Spacer()
+
+        Button(action: { showingCheckout = true }) {
+          HStack {
+            Text("Checkout")
+              .font(.headline)
+              .fontWeight(.semibold)
+            Image(systemName: "arrow.right")
+              .font(.headline)
+          }
+          .foregroundColor(.marketBlue)
+          .padding(.vertical, 12)
+          .padding(.horizontal, 20)
+          .background(Color.white)
+          .cornerRadius(30)
+        }
+      }
+      .padding(.horizontal, 24)
+      .padding(.vertical, 16)
+      .padding(.bottom, 8)
+    }
+    .background(
+      Rectangle()
+        .fill(.ultraThinMaterial)
+        .overlay(Color.black.opacity(0.2))
+    )
+    .cornerRadius(24, corners: [.topLeft, .topRight])
+    .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: -5)
+  }
+
+  private var customAmountSheet: some View {
+    ZStack {
+      Color.marketBlue.edgesIgnoringSafeArea(.all)
+
+      VStack(spacing: 24) {
+        Text("Add Custom Amount")
+          .font(Typography.title3)
+          .foregroundColor(.white)
+          .bold()
+
+        VStack(spacing: 16) {
+          VStack(alignment: .leading, spacing: 8) {
+            Text("Amount")
+              .font(Typography.caption1)
+              .foregroundColor(.marketTextSecondary)
+
+            HStack {
+              Text(profileVM.currencySymbol)
+                .foregroundColor(.white)
+                .font(.title2)
+              TextField("\(profileVM.currencySymbol) 0.00", text: $customAmount)
+                .currencyInput(text: $customAmount)
+                .foregroundColor(.white)
+                .font(.title2)
+            }
+            .padding()
+            .background(Color.marketCard)
+            .cornerRadius(12)
+          }
+
+          VStack(alignment: .leading, spacing: 8) {
+            Text("Description")
+              .font(Typography.caption1)
+              .foregroundColor(.marketTextSecondary)
+
+            TextField("Item Name", text: $customDescription)
+              .foregroundColor(.white)
+              .padding()
+              .background(Color.marketCard)
+              .cornerRadius(12)
+          }
+        }
+
+        HStack(spacing: 16) {
+          Button(action: {
+            showingCustomAmount = false
+            customAmount = ""
+            customDescription = ""
+          }) {
+            Text("Cancel")
+              .font(Typography.body)
+              .foregroundColor(.marketTextSecondary)
+              .frame(maxWidth: .infinity)
+              .padding()
+              .background(Color.marketCard)
+              .cornerRadius(12)
+          }
+
+          Button(action: addCustomAmount) {
+            Text("Add")
+              .font(Typography.body)
+              .bold()
+              .foregroundColor(.white)
+              .frame(maxWidth: .infinity)
+              .padding()
+              .background(Color.white.opacity(0.2))
+              .cornerRadius(12)
+              .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                  .stroke(Color.white.opacity(0.5), lineWidth: 1)
+              )
+          }
+          .disabled(customAmount.isEmpty)
+          .opacity(customAmount.isEmpty ? 0.5 : 1.0)
+        }
+      }
+      .padding(24)
+    }
+    .presentationDetents([.medium])
+  }
+
+  private func addCustomAmount() {
+    if let amount = Double(customAmount) {
+      salesVM.addCustomAmount(
+        name: customDescription.isEmpty ? "Custom Amount" : customDescription,
+        price: amount
+      )
+      showingCustomAmount = false
+      customAmount = ""
+      customDescription = ""
+    }
+  }
+
+  private func fetchActivities() async {
     do {
-      let fetchedActivities: [Activity] =
-        try await client
-        .from("recent_activity")
-        .select()
-        .eq("user_id", value: userId)
-        .order("created_at", ascending: false)
-        .limit(20)
-        .execute()
-        .value
-
-      self.activities = fetchedActivities
+      activities = try await ActivityService.fetchRecent(limit: 20)
     } catch {
-      print("❌ [SalesView] Error fetching activities: \(error)")
+      activities = []
     }
   }
 }
@@ -396,12 +380,11 @@ struct SalesView: View {
 struct ProductCard: View {
   let product: Product
   let action: () -> Void
-  let isSelected: Bool
   @EnvironmentObject var profileVM: ProfileViewModel
 
   var body: some View {
     Button(action: action) {
-      VStack(alignment: .leading, spacing: Spacing.xxs) {
+      VStack(alignment: .leading, spacing: Spacing.xs) {
         Text(product.name)
           .font(Typography.headline)
           .foregroundColor(.white)
@@ -415,7 +398,7 @@ struct ProductCard: View {
           .fontWeight(.bold)
           .foregroundColor(.white)
       }
-      .frame(height: 100)
+      .frame(height: 85)
       .padding(Spacing.sm)
       .background(Color.marketCard)
       .cornerRadius(CornerRadius.sm)

@@ -29,7 +29,7 @@ struct FeatureVote: Encodable, Decodable {
 }
 
 @MainActor
-class FeedbackViewModel: ObservableObject {
+final class FeedbackViewModel: ObservableObject {
   @Published var featureRequests: [FeatureRequest] = []
   @Published var isLoading = false
   @Published var errorMessage: String?
@@ -38,10 +38,9 @@ class FeedbackViewModel: ObservableObject {
 
   func submitBug(description: String) async -> Bool {
     guard let userId = client.auth.currentUser?.id else {
-      print("❌ [FeedbackVM] No user ID found for bug submission")
+      errorMessage = "User not logged in"
       return false
     }
-    print("🐞 [FeedbackVM] Submitting bug report...")
 
     isLoading = true
     defer { isLoading = false }
@@ -54,24 +53,19 @@ class FeedbackViewModel: ObservableObject {
 
     do {
       try await client.from("bugs").insert(bug).execute()
-      print("✅ [FeedbackVM] Bug submitted successfully")
       return true
     } catch {
       errorMessage = "Failed to submit bug: \(error.localizedDescription)"
-      print("❌ [FeedbackVM] Error submitting bug: \(error)")
       return false
     }
   }
 
   func fetchFeatureRequests() async {
-    print("💡 [FeedbackVM] Fetching feature requests...")
     isLoading = true
     defer { isLoading = false }
 
     do {
-      // Fetch features
-      let features: [FeatureRequest] =
-        try await client
+      let features: [FeatureRequest] = try await client
         .from("feature_requests")
         .select()
         .eq("delivered", value: false)
@@ -79,10 +73,8 @@ class FeedbackViewModel: ObservableObject {
         .execute()
         .value
 
-      // Fetch user votes to mark "hasVoted"
       if let userId = client.auth.currentUser?.id {
-        let votes: [FeatureVote] =
-          try await client
+        let votes: [FeatureVote] = try await client
           .from("feature_votes")
           .select()
           .eq("user_id", value: userId)
@@ -99,19 +91,16 @@ class FeedbackViewModel: ObservableObject {
       } else {
         self.featureRequests = features
       }
-      print("✅ [FeedbackVM] Fetched \(features.count) feature requests")
     } catch {
       errorMessage = "Failed to fetch features: \(error.localizedDescription)"
-      print("❌ [FeedbackVM] Error fetching feature requests: \(error)")
     }
   }
 
   func submitFeatureRequest(title: String, description: String) async -> Bool {
     guard let userId = client.auth.currentUser?.id else {
-      print("❌ [FeedbackVM] No user ID found for feature submission")
+      errorMessage = "User not logged in"
       return false
     }
-    print("💡 [FeedbackVM] Submitting feature request: \(title)")
 
     isLoading = true
     defer { isLoading = false }
@@ -128,24 +117,20 @@ class FeedbackViewModel: ObservableObject {
 
     do {
       try await client.from("feature_requests").insert(feature).execute()
-      print("✅ [FeedbackVM] Feature request submitted successfully")
-      await fetchFeatureRequests()  // Refresh list
+      await fetchFeatureRequests()
       return true
     } catch {
       errorMessage = "Failed to submit feature: \(error.localizedDescription)"
-      print("❌ [FeedbackVM] Error submitting feature request: \(error)")
       return false
     }
   }
 
   func toggleVote(for feature: FeatureRequest) async {
     guard let userId = client.auth.currentUser?.id else {
-      print("❌ [FeedbackVM] No user ID found for voting")
+      errorMessage = "User not logged in"
       return
     }
-    print("💡 [FeedbackVM] Toggling vote for feature: \(feature.title)")
 
-    // Optimistic update
     if let index = featureRequests.firstIndex(where: { $0.id == feature.id }) {
       let alreadyVoted = featureRequests[index].hasVoted ?? false
       featureRequests[index].hasVoted = !alreadyVoted
@@ -156,7 +141,6 @@ class FeedbackViewModel: ObservableObject {
       let vote = FeatureVote(feature_id: feature.id, user_id: userId)
 
       if feature.hasVoted == true {
-        // Remove vote (delete)
         try await client
           .from("feature_votes")
           .delete()
@@ -164,27 +148,17 @@ class FeedbackViewModel: ObservableObject {
           .eq("user_id", value: userId)
           .execute()
 
-        // Decrement count in feature_requests
         try await client.rpc("decrement_votes", params: ["row_id": feature.id]).execute()
 
       } else {
-        // Add vote
         try await client.from("feature_votes").insert(vote).execute()
 
-        // Increment count
         try await client.rpc("increment_votes", params: ["row_id": feature.id]).execute()
       }
 
-      // We could refetch, but optimistic update is smoother.
-      // Ideally we use an RPC to increment/decrement to be safe, but for now simple update is okay or just refetch.
-      // Actually, without RPC, concurrent updates to 'votes' column are race-condition prone.
-      // But for this MVP, I'll just refetch to be sure.
-      print("✅ [FeedbackVM] Vote toggled successfully")
       await fetchFeatureRequests()
 
     } catch {
-      // Revert on error
-      print("❌ [FeedbackVM] Error toggling vote: \(error)")
       await fetchFeatureRequests()
       errorMessage = "Failed to vote: \(error.localizedDescription)"
     }

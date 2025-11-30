@@ -1,33 +1,26 @@
 import SwiftUI
 
-// MARK: - Colors
 extension Color {
-  // Primary Colors
-  static let marketBlue = Color(hex: "0066CC")  // Slightly darker than 007AFF
-  static let marketDarkBlue = Color(hex: "004499")  // Slightly darker than 0055B3
+  static let marketBlue = Color(hex: "0066CC")
+  static let marketDarkBlue = Color(hex: "004499")
   static let marketLightBlue = Color(hex: "5AC8FA")
 
-  // Semantic Colors
-  static let marketGreen = Color(hex: "1DB954")  // Success, Sales, Positive
-  static let marketRed = Color(hex: "FF3B30")  // Error, Delete, Negative
-  static let marketYellow = Color(hex: "FFCC00")  // Warning
+  static let marketGreen = Color(hex: "1DB954")
+  static let marketRed = Color(hex: "FF3B30")
+  static let marketYellow = Color(hex: "FFCC00")
 
-  // Text Colors
   static let marketTextPrimary = Color.white
   static let marketTextSecondary = Color.white.opacity(0.7)
   static let marketTextTertiary = Color(hex: "8E8E93")
 
-  // Surface Colors
-  static let marketCard = Color.white.opacity(0.15)  // Glassmorphism
-  static let marketSurface = Color.white  // Solid backgrounds
+  static let marketCard = Color.white.opacity(0.15)
+  static let marketSurface = Color.white
 
-  // Legacy (for compatibility)
   static let marketBlack = Color.white
   static let marketDarkGray = Color(hex: "E5E5E5")
   static let marketLightGray = Color(hex: "CCCCCC")
 }
 
-// MARK: - Typography
 enum Typography {
   static let display = Font.system(size: 48, weight: .bold)
   static let title1 = Font.system(size: 28, weight: .bold)
@@ -42,7 +35,6 @@ enum Typography {
   static let caption2 = Font.caption2
 }
 
-// MARK: - Spacing
 enum Spacing {
   static let xxxs: CGFloat = 2
   static let xxs: CGFloat = 4
@@ -54,7 +46,6 @@ enum Spacing {
   static let xxl: CGFloat = 32
 }
 
-// MARK: - Corner Radius
 enum CornerRadius {
   static let xs: CGFloat = 8
   static let sm: CGFloat = 12
@@ -63,7 +54,6 @@ enum CornerRadius {
   static let xl: CGFloat = 40
 }
 
-// MARK: - Shadows
 struct ShadowStyle {
   let color: Color
   let radius: CGFloat
@@ -77,9 +67,7 @@ enum Shadow {
   static let tabBar = ShadowStyle(color: .black.opacity(0.1), radius: 8, x: 0, y: -2)
 }
 
-// MARK: - View Modifiers
 extension View {
-  // Card Styles
   func marketCardStyle() -> some View {
     self
       .background(Color.marketCard)
@@ -96,7 +84,6 @@ extension View {
         color: Shadow.card.color, radius: Shadow.card.radius, x: Shadow.card.x, y: Shadow.card.y)
   }
 
-  // Button Styles
   func primaryButtonStyle() -> some View {
     self
       .font(Typography.headline)
@@ -124,14 +111,12 @@ extension View {
       .clipShape(Circle())
   }
 
-  // Backgrounds
   func revolutBackground() -> some View {
     self.background(
       AnimatedGradientBackground()
     )
   }
 
-  // Search Bar Style
   func searchBarStyle() -> some View {
     self
       .padding(.vertical, Spacing.xs)
@@ -140,7 +125,6 @@ extension View {
       .cornerRadius(CornerRadius.lg)
   }
 
-  // Header Style (unified across all views)
   func unifiedHeaderStyle() -> some View {
     self
       .padding(.horizontal, Spacing.md)
@@ -148,7 +132,6 @@ extension View {
       .padding(.bottom, Spacing.xs)
   }
 
-  // Placeholder Helper
   func placeholder<Content: View>(
     when shouldShow: Bool,
     alignment: Alignment = .leading,
@@ -161,7 +144,6 @@ extension View {
   }
 }
 
-// MARK: - Hex Color Initializer
 extension Color {
   init(hex: String) {
     let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
