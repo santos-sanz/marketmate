@@ -73,8 +73,36 @@ struct ProfileView: View {
               .padding(.horizontal, Spacing.md)
 
               // Theme Section
-              ThemeSelectionView()
-                .padding(.horizontal, Spacing.md)
+              VStack(alignment: .leading, spacing: Spacing.sm) {
+                Text("Theme")
+                  .font(Typography.subheadline)
+                  .foregroundColor(themeManager.secondaryTextColor)
+                  .padding(.horizontal, Spacing.xs)
+
+                NavigationLink(destination: ThemeSettingsView()) {
+                  HStack(spacing: Spacing.md) {
+                    ThemeSplitCircle(
+                      backgroundHex: profileVM.themeBackgroundHex,
+                      textHex: profileVM.themeTextHex
+                    )
+                    .frame(width: 24, height: 24)
+
+                    Text("Theme")
+                      .font(Typography.body)
+                      .foregroundColor(themeManager.primaryTextColor)
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                      .font(.caption)
+                      .foregroundColor(themeManager.secondaryTextColor)
+                  }
+                  .padding(Spacing.md)
+                  .contentShape(Rectangle())
+                }
+                .marketCardStyle()
+              }
+              .padding(.horizontal, Spacing.md)
 
               // Data Management Section
               VStack(alignment: .leading, spacing: Spacing.sm) {
@@ -277,239 +305,27 @@ struct ProfileToggleRow: View {
   }
 }
 
-struct ThemeSelectionView: View {
-  @EnvironmentObject var profileVM: ProfileViewModel
-  @EnvironmentObject var themeManager: ThemeManager
-
-  @State private var customColor = Color.white
-  @State private var isCustomColorPickerPresented = false
-
-  // Summer & Vibrant Palette
-  private let backgroundOptions = [
-    "0F172A",  // Default Dark
-    "FFFFFF",  // White
-    "FF5733",  // Vibrant Orange
-    "FFC300",  // Vivid Yellow
-    "DAF7A6",  // Light Green
-    "33FF57",  // Bright Green
-    "33FFF5",  // Cyan
-    "3380FF",  // Bright Blue
-    "A833FF",  // Purple
-    "FF33A8",  // Pink
-  ]
-
-  // Restricted Text Colors: White, Gray, Black
-  private let textOptions = ["FFFFFF", "808080", "000000"]
+struct ThemeSplitCircle: View {
+  let backgroundHex: String
+  let textHex: String
 
   var body: some View {
-    VStack(alignment: .leading, spacing: Spacing.sm) {
-      Text("Theme")
-        .font(Typography.subheadline)
-        .foregroundColor(themeManager.secondaryTextColor)
-        .padding(.horizontal, Spacing.xs)
+    ZStack {
+      // Left half - background color
+      Circle()
+        .trim(from: 0, to: 0.5)
+        .fill(Color(hex: backgroundHex))
+        .rotationEffect(.degrees(90))
 
-      VStack(alignment: .leading, spacing: Spacing.lg) {
-        // Background Color Section
-        VStack(alignment: .leading, spacing: Spacing.sm) {
-          Text("Background Color")
-            .font(Typography.body.weight(themeManager.primaryTextWeight))
-            .foregroundColor(themeManager.primaryTextColor)
+      // Right half - text color
+      Circle()
+        .trim(from: 0, to: 0.5)
+        .fill(Color(hex: textHex))
+        .rotationEffect(.degrees(270))
 
-          Text("Choose a vibrant color or select your own.")
-            .font(Typography.caption1)
-            .foregroundColor(themeManager.secondaryTextColor)
-
-          ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Spacing.sm) {
-              // Preset Colors
-              ForEach(backgroundOptions, id: \.self) { hex in
-                Button(action: {
-                  applyTheme(backgroundHex: hex, textHex: profileVM.themeTextHex)
-                }) {
-                  ColorChip(
-                    color: Color(hex: hex),
-                    isSelected: hex.uppercased() == profileVM.themeBackgroundHex.uppercased(),
-                    showBorder: hex.uppercased() == "FFFFFF"
-                  )
-                }
-              }
-
-              // Custom Color Picker Button
-              Button(action: { isCustomColorPickerPresented = true }) {
-                Circle()
-                  .fill(
-                    LinearGradient(
-                      colors: [.red, .orange, .yellow, .green, .blue, .purple],
-                      startPoint: .topLeading,
-                      endPoint: .bottomTrailing
-                    )
-                  )
-                  .frame(width: 36, height: 36)
-                  .overlay(
-                    Circle()
-                      .stroke(Color.white.opacity(0.2), lineWidth: 2)
-                  )
-                  .overlay(
-                    Image(systemName: "plus")
-                      .font(.system(size: 14, weight: .bold))
-                      .foregroundColor(.white)
-                      .shadow(radius: 2)
-                  )
-              }
-            }
-            .padding(.vertical, 4)
-          }
-        }
-
-        Divider().background(themeManager.primaryTextColor.opacity(0.08))
-
-        // Text Color Section
-        ThemeSelectorRow(
-          title: "Text Color",
-          description: "Select a text color for optimal contrast.",
-          currentHex: profileVM.themeTextHex,
-          options: textOptions
-        ) { newHex in
-          applyTheme(backgroundHex: profileVM.themeBackgroundHex, textHex: newHex)
-        }
-
-        ThemePreview()
-      }
-      .marketCardStyle()
-    }
-    .sheet(isPresented: $isCustomColorPickerPresented) {
-      VStack(spacing: 20) {
-        Text("Select Custom Color")
-          .font(Typography.title3)
-          .foregroundColor(themeManager.primaryTextColor)
-          .padding(.top)
-
-        ColorPicker("Pick a color", selection: $customColor, supportsOpacity: false)
-          .labelsHidden()
-          .scaleEffect(1.5)
-          .padding()
-
-        Button(action: {
-          if let hex = customColor.toHex() {
-            applyTheme(backgroundHex: hex, textHex: profileVM.themeTextHex)
-          }
-          isCustomColorPickerPresented = false
-        }) {
-          Text("Apply Color")
-            .primaryButtonStyle()
-        }
-        .padding(.horizontal)
-      }
-      .padding()
-      .presentationDetents([.medium])
-      .background(themeManager.backgroundColor.ignoresSafeArea())
-    }
-  }
-
-  private func applyTheme(backgroundHex: String, textHex: String) {
-    let normalizedBackground = backgroundHex.uppercased()
-    let normalizedText = textHex.uppercased()
-    guard
-      normalizedBackground != profileVM.themeBackgroundHex
-        || normalizedText != profileVM.themeTextHex
-    else { return }
-    profileVM.themeBackgroundHex = normalizedBackground
-    profileVM.themeTextHex = normalizedText
-    themeManager.apply(backgroundHex: normalizedBackground, textHex: normalizedText)
-    profileVM.scheduleThemeUpdate(backgroundHex: normalizedBackground, textHex: normalizedText)
-  }
-}
-
-struct ThemeSelectorRow: View {
-  @EnvironmentObject var themeManager: ThemeManager
-  let title: String
-  let description: String
-  let currentHex: String
-  let options: [String]
-  let onSelect: (String) -> Void
-
-  var body: some View {
-    VStack(alignment: .leading, spacing: Spacing.sm) {
-      VStack(alignment: .leading, spacing: 4) {
-        Text(title)
-          .font(Typography.body.weight(themeManager.primaryTextWeight))
-          .foregroundColor(themeManager.primaryTextColor)
-
-        Text(description)
-          .font(Typography.caption1)
-          .foregroundColor(themeManager.secondaryTextColor)
-          .fixedSize(horizontal: false, vertical: true)
-      }
-
-      ScrollView(.horizontal, showsIndicators: false) {
-        HStack(spacing: Spacing.sm) {
-          ForEach(options, id: \.self) { hex in
-            Button(action: { onSelect(hex) }) {
-              ColorChip(
-                color: Color(hex: hex),
-                isSelected: hex.uppercased() == currentHex.uppercased(),
-                showBorder: hex.uppercased() == "FFFFFF" || hex.uppercased() == "F8FAFC"  // Add border for light colors
-              )
-            }
-          }
-        }
-        .padding(.vertical, 4)
-      }
-    }
-  }
-}
-
-struct ColorChip: View {
-  let color: Color
-  let isSelected: Bool
-  var showBorder: Bool = false
-
-  var body: some View {
-    Circle()
-      .fill(color)
-      .frame(width: 36, height: 36)
-      .overlay(
-        Circle()
-          .stroke(Color.white.opacity(showBorder ? 0.6 : (isSelected ? 0.9 : 0.2)), lineWidth: 2)
-      )
-      .overlay(
-        Group {
-          if isSelected {
-            Image(systemName: "checkmark")
-              .font(.system(size: 12, weight: .bold))
-              .foregroundColor(color.adjusted(by: -0.6))
-          }
-        }
-      )
-  }
-}
-
-struct ThemePreview: View {
-  @EnvironmentObject var themeManager: ThemeManager
-
-  var body: some View {
-    VStack(alignment: .leading, spacing: Spacing.xs) {
-      Text("Preview")
-        .font(Typography.caption1.weight(.semibold))
-        .foregroundColor(themeManager.secondaryTextColor)
-
-      VStack(alignment: .leading, spacing: Spacing.xs) {
-        Text("Primary Headline")
-          .font(.system(size: 16, weight: themeManager.primaryTextWeight))
-          .foregroundColor(themeManager.primaryTextColor)
-
-        Text("Secondary text with lower weight and opacity.")
-          .font(.system(size: 14, weight: themeManager.secondaryTextWeight))
-          .foregroundColor(themeManager.secondaryTextColor)
-      }
-      .padding(Spacing.md)
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .background(themeManager.backgroundColor.opacity(0.9))
-      .cornerRadius(CornerRadius.sm)
-      .overlay(
-        RoundedRectangle(cornerRadius: CornerRadius.sm)
-          .stroke(themeManager.primaryTextColor.opacity(0.08))
-      )
+      // Border
+      Circle()
+        .stroke(Color.white.opacity(0.3), lineWidth: 1)
     }
   }
 }
