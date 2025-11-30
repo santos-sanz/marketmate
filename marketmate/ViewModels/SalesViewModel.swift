@@ -36,8 +36,19 @@ final class SalesViewModel: ObservableObject {
     }
   }
 
-  func addCustomAmount(name: String, price: Double) {
-    cartItems.append(CartItem(product: nil, name: name, price: price, quantity: 1))
+  func addCustomAmount(name: String, price: Double, quantity: Int = 1) {
+    cartItems.append(
+      CartItem(product: nil, name: name, price: price, quantity: max(1, quantity)))
+  }
+
+  func increaseQuantity(for item: CartItem) {
+    if let index = cartItems.firstIndex(where: { $0.id == item.id }) {
+      cartItems[index].quantity += 1
+    }
+  }
+
+  func removeInventoryItemsFromCart() {
+    cartItems.removeAll { $0.product != nil }
   }
 
   func removeFromCart(item: CartItem) {

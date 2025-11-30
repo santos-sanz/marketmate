@@ -4,9 +4,11 @@ struct MainTabView: View {
   @StateObject private var inventoryVM = InventoryViewModel()
   @StateObject private var salesVM = SalesViewModel()
   @StateObject private var costsVM = CostsViewModel()
+  @EnvironmentObject var profileVM: ProfileViewModel
+  @State private var selectedTab = 0
 
   var body: some View {
-    TabView {
+    TabView(selection: $selectedTab) {
       NavigationStack {
         HomeView()
           .environmentObject(salesVM)
@@ -29,14 +31,16 @@ struct MainTabView: View {
       }
       .tag(1)
 
-      NavigationStack {
-        InventoryView()
-          .environmentObject(inventoryVM)
+      if profileVM.useInventory {
+        NavigationStack {
+          InventoryView()
+            .environmentObject(inventoryVM)
+        }
+        .tabItem {
+          Label("Inventory", systemImage: "cube.box.fill")
+        }
+        .tag(2)
       }
-      .tabItem {
-        Label("Inventory", systemImage: "cube.box.fill")
-      }
-      .tag(2)
 
       NavigationStack {
         CostsView()
@@ -48,5 +52,10 @@ struct MainTabView: View {
       .tag(3)
     }
     .tint(.white)
+    .onChange(of: profileVM.useInventory) { newValue in
+      if !newValue, selectedTab == 2 {
+        selectedTab = 0
+      }
+    }
   }
 }

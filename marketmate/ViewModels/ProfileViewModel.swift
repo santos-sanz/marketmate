@@ -8,6 +8,7 @@ final class ProfileViewModel: ObservableObject {
   @Published var isLoading = false
   @Published var errorMessage: String?
   @Published var selectedCurrency: String = "USD"  // Default
+  @Published var useInventory: Bool = true
 
   var currencySymbol: String {
     switch selectedCurrency {
@@ -40,6 +41,9 @@ final class ProfileViewModel: ObservableObject {
       if let currency = profile.currency {
         self.selectedCurrency = currency
       }
+      if let useInventory = profile.useInventory {
+        self.useInventory = useInventory
+      }
     } catch {
       errorMessage = "Failed to load profile"
     }
@@ -65,6 +69,28 @@ final class ProfileViewModel: ObservableObject {
       }
     } catch {
       errorMessage = "Failed to update currency: \(error.localizedDescription)"
+    }
+  }
+
+  func updateUseInventory(_ enabled: Bool) async {
+    guard let userId = client.auth.currentUser?.id else { return }
+    isLoading = true
+    defer { isLoading = false }
+    do {
+      let updateData = ["use_inventory": enabled]
+      try await client
+        .from("profiles")
+        .update(updateData)
+        .eq("id", value: userId)
+        .execute()
+
+      self.useInventory = enabled
+      if var currentProfile = profile {
+        currentProfile.useInventory = enabled
+        self.profile = currentProfile
+      }
+    } catch {
+      errorMessage = "Failed to update settings: \(error.localizedDescription)"
     }
   }
 
@@ -133,6 +159,7 @@ final class ProfileViewModel: ObservableObject {
 
       self.profile = nil
       self.selectedCurrency = "USD"
+      self.useInventory = true
 
       do {
         try await client.auth.signOut()

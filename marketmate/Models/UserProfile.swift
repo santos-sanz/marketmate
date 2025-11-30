@@ -7,6 +7,7 @@ struct UserProfile: Codable, Identifiable {
   var avatarUrl: String?
   var website: String?
   var currency: String?
+  var useInventory: Bool?
   let updatedAt: Date?
 
   enum CodingKeys: String, CodingKey {
@@ -16,6 +17,7 @@ struct UserProfile: Codable, Identifiable {
     case avatarUrl = "avatar_url"
     case website
     case currency
+    case useInventory = "use_inventory"
     case updatedAt = "updated_at"
   }
 }

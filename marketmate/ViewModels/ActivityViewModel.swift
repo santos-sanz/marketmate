@@ -11,6 +11,14 @@ final class ActivityViewModel: ObservableObject {
   @Published var errorMessage: String?
   @Published var expandedDetails: ActivityDetail?
   @Published var isLoadingDetails = false
+  @Published var includeInventoryActivities: Bool = true {
+    didSet {
+      if !includeInventoryActivities, selectedFilter == .products {
+        selectedFilter = .all
+      }
+      applyFilter()
+    }
+  }
 
   private let client = SupabaseService.shared.client
 
@@ -43,6 +51,11 @@ final class ActivityViewModel: ObservableObject {
   @Published var selectedFilter: ActivityFilter = .all { didSet { applyFilter() } }
   @Published var selectedDateFilter: DateFilter = .allTime { didSet { applyFilter() } }
   @Published var searchText: String = "" { didSet { applyFilter() } }
+
+  var availableFilters: [ActivityFilter] {
+    ActivityFilter.allCases.filter { includeInventoryActivities || $0 != .products }
+  }
+
   func fetchActivities() async {
     isLoading = true
     errorMessage = nil
@@ -58,6 +71,12 @@ final class ActivityViewModel: ObservableObject {
 
   private func applyFilter() {
     var result = activities
+
+    if !includeInventoryActivities {
+      result = result.filter {
+        ![Activity.ActivityType.productCreated, .productUpdated, .productDeleted].contains($0.type)
+      }
+    }
 
     // 1. Category Filter
     switch selectedFilter {

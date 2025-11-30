@@ -137,11 +137,19 @@ struct ActivityHistoryView: View {
       .toolbarColorScheme(.dark, for: .navigationBar)
       .onAppear {
         if let filter = initialFilter {
-          viewModel.selectedFilter = filter
+          if filter == .products && !profileVM.useInventory {
+            viewModel.selectedFilter = .all
+          } else {
+            viewModel.selectedFilter = filter
+          }
         }
+        viewModel.includeInventoryActivities = profileVM.useInventory
         Task {
           await viewModel.fetchActivities()
         }
+      }
+      .onChange(of: profileVM.useInventory) { newValue in
+        viewModel.includeInventoryActivities = newValue
       }
       .sheet(isPresented: $showingFilters) {
         FilterSheet(viewModel: viewModel)
@@ -203,6 +211,9 @@ struct FilterChip: View {
 #Preview {
   ActivityHistoryView()
     .environmentObject(ProfileViewModel())
+    .environmentObject(InventoryViewModel())
+    .environmentObject(CostsViewModel())
+    .environmentObject(SalesViewModel())
 }
 
 struct FilterSheet: View {
@@ -227,7 +238,7 @@ struct FilterSheet: View {
             .foregroundColor(.marketTextSecondary)
 
           FlowLayout(spacing: 10) {
-            ForEach(ActivityViewModel.ActivityFilter.allCases) { filter in
+            ForEach(viewModel.availableFilters) { filter in
               FilterChip(
                 title: filter.rawValue,
                 isSelected: viewModel.selectedFilter == filter,

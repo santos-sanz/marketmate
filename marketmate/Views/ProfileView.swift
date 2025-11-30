@@ -57,6 +57,14 @@ struct ProfileView: View {
                     ProfileRow(
                       icon: "banknote", title: "Currency", value: profileVM.selectedCurrency)
                   }
+
+                  Divider().background(Color.white.opacity(0.1))
+
+                  ProfileToggleRow(
+                    icon: "shippingbox",
+                    title: "Use Inventory",
+                    isOn: $profileVM.useInventory
+                  )
                 }
                 .marketCardStyle()
               }
@@ -173,6 +181,18 @@ struct ProfileView: View {
         Text(profileVM.errorMessage ?? "An unknown error occurred")
       }
       .disabled(profileVM.isLoading)
+      .onChange(of: profileVM.selectedCurrency) { newValue in
+        guard profileVM.profile?.currency != newValue else { return }
+        Task {
+          await profileVM.updateCurrency(newValue)
+        }
+      }
+      .onChange(of: profileVM.useInventory) { newValue in
+        guard profileVM.profile?.useInventory != newValue else { return }
+        Task {
+          await profileVM.updateUseInventory(newValue)
+        }
+      }
     }
   }
 }
@@ -211,6 +231,29 @@ struct ProfileRow: View {
     }
     .padding(Spacing.md)
     .contentShape(Rectangle())  // Make full row tappable
+  }
+}
+
+struct ProfileToggleRow: View {
+  let icon: String
+  let title: String
+  @Binding var isOn: Bool
+
+  var body: some View {
+    Toggle(isOn: $isOn) {
+      HStack(spacing: Spacing.md) {
+        Image(systemName: icon)
+          .font(.system(size: 20))
+          .foregroundColor(.marketTextSecondary)
+          .frame(width: 24)
+
+        Text(title)
+          .font(Typography.body)
+          .foregroundColor(.white)
+      }
+    }
+    .toggleStyle(SwitchToggleStyle(tint: .marketBlue))
+    .padding(Spacing.md)
   }
 }
 

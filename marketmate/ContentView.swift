@@ -11,6 +11,9 @@ struct ContentView: View {
         MainTabView()
           .environmentObject(authVM)
           .environmentObject(profileVM)
+          .task {
+            await profileVM.fetchProfile()
+          }
       } else {
         AuthView()
           .environmentObject(authVM)

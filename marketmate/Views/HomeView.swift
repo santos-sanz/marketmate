@@ -181,7 +181,8 @@ struct HomeView: View {
 
   private func fetchActivities() async {
     do {
-      activities = try await ActivityService.fetchRecent(limit: 50)
+      let fetched = try await ActivityService.fetchRecent(limit: 50)
+      activities = profileVM.useInventory ? fetched : fetched.filter { !$0.isProductActivity }
     } catch {
       activities = []
     }

@@ -31,3 +31,9 @@ struct Activity: Identifiable, Codable {
     case createdAt = "created_at"
   }
 }
+
+extension Activity {
+  var isProductActivity: Bool {
+    [.productCreated, .productUpdated, .productDeleted].contains(type)
+  }
+}
