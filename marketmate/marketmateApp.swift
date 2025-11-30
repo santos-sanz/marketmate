@@ -12,6 +12,8 @@ import SwiftUI
 struct marketmateApp: App {
   let persistenceController = PersistenceController.shared
 
+  @StateObject private var themeManager = ThemeManager()
+
   init() {
     AppAppearance.configure()
   }
@@ -20,6 +22,7 @@ struct marketmateApp: App {
     WindowGroup {
       ContentView()
         .environment(\.managedObjectContext, persistenceController.container.viewContext)
+        .environmentObject(themeManager)
         .preferredColorScheme(.light)  // Force light mode
     }
   }

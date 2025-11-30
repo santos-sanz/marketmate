@@ -27,6 +27,7 @@ struct ReportsView: View {
             }
           }
           .padding(.vertical, 16)
+          .animation(nil, value: reportsVM.isLoading)
         }
         .overlay(alignment: .topTrailing) {
           if reportsVM.isLoading {
@@ -178,13 +179,7 @@ struct ReportsView: View {
       }
     }
     .padding()
-    .background(
-      LinearGradient(
-        colors: [Color.marketBlue.opacity(0.9), Color.marketDarkBlue.opacity(0.9)],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-      )
-    )
+    .background(Color.marketCard)
     .cornerRadius(CornerRadius.md)
     .shadow(color: .black.opacity(0.25), radius: 10, x: 0, y: 8)
     .padding(.horizontal)

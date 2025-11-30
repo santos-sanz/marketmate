@@ -1,16 +1,22 @@
 import SwiftUI
 
 struct AnimatedGradientBackground: View {
+  @EnvironmentObject var themeManager: ThemeManager
   @State private var animateGradient = false
+
+  private var gradientColors: [Color] {
+    let base = themeManager.backgroundColor
+    return [
+      base.adjusted(by: -0.12),
+      base.adjusted(by: 0.04),
+      base.adjusted(by: 0.14),
+      base.adjusted(by: -0.2),
+    ]
+  }
 
   var body: some View {
     LinearGradient(
-      colors: [
-        Color.marketBlue,
-        Color.marketDarkBlue,
-        Color.marketBlue.opacity(0.8),
-        Color.marketLightBlue.opacity(0.6)
-      ],
+      colors: gradientColors,
       startPoint: animateGradient ? .topLeading : .bottomLeading,
       endPoint: animateGradient ? .bottomTrailing : .topTrailing
     )

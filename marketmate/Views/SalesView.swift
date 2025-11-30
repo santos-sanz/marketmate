@@ -296,44 +296,35 @@ struct SalesView: View {
         .cornerRadius(CornerRadius.sm)
       }
 
-      VStack(alignment: .leading, spacing: 8) {
-        Text("Quick amounts")
-          .font(Typography.caption1)
-          .foregroundColor(.marketTextSecondary)
-
-        HStack {
-          ForEach(quickAmounts, id: \.self) { amount in
-            Button(action: {
-              let base = customAmountValue ?? 0
-              customAmount = String(format: "%.2f", base + amount)
-            }) {
-              Text("+\(String(format: "%.0f", amount))")
-                .font(Typography.body)
-                .foregroundColor(.white)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(Color.white.opacity(0.08))
-                .cornerRadius(12)
-            }
-          }
-        }
-      }
-
-      VStack(alignment: .leading, spacing: 12) {
+      HStack {
         Text("Quantity")
           .font(Typography.caption1)
           .foregroundColor(.marketTextSecondary)
 
-        HStack {
-          Stepper(value: $customQuantity, in: 1...50) {
-            Text("\(customQuantity) item\(customQuantity == 1 ? "" : "s")")
-              .font(Typography.body)
-              .foregroundColor(.white)
+        Spacer()
+
+        HStack(spacing: 16) {
+          Button(action: {
+            if customQuantity > 1 { customQuantity -= 1 }
+          }) {
+            Image(systemName: "minus.circle.fill")
+              .foregroundColor(.marketTextSecondary)
+              .font(.title3)
+          }
+
+          Text("\(customQuantity)")
+            .font(Typography.body.weight(.semibold))
+            .foregroundColor(.white)
+            .frame(minWidth: 20)
+
+          Button(action: {
+            customQuantity += 1
+          }) {
+            Image(systemName: "plus.circle.fill")
+              .foregroundColor(.marketBlue)
+              .font(.title3)
           }
         }
-        .padding()
-        .background(Color.white.opacity(0.08))
-        .cornerRadius(CornerRadius.sm)
       }
 
       VStack(alignment: .leading, spacing: 8) {
@@ -355,7 +346,7 @@ struct SalesView: View {
             .fontWeight(.semibold)
         }
         .font(Typography.body)
-        .foregroundColor(.black)
+        .foregroundColor(.white)
         .frame(maxWidth: .infinity)
         .padding()
         .background(canAddCustomAmount ? Color.marketBlue : Color.marketBlue.opacity(0.4))
@@ -364,7 +355,7 @@ struct SalesView: View {
       .disabled(!canAddCustomAmount)
     }
     .padding()
-    .background(Color.white.opacity(0.05))
+    .background(Color.marketCard)
     .cornerRadius(CornerRadius.md)
     .overlay(
       RoundedRectangle(cornerRadius: CornerRadius.md)

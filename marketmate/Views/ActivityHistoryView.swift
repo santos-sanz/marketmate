@@ -214,6 +214,7 @@ struct FilterChip: View {
     .environmentObject(InventoryViewModel())
     .environmentObject(CostsViewModel())
     .environmentObject(SalesViewModel())
+    .environmentObject(ThemeManager())
 }
 
 struct FilterSheet: View {

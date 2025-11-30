@@ -9,6 +9,8 @@ final class ProfileViewModel: ObservableObject {
   @Published var errorMessage: String?
   @Published var selectedCurrency: String = "USD"  // Default
   @Published var useInventory: Bool = true
+  @Published var themeBackgroundHex: String = ThemeDefaults.backgroundHex
+  @Published var themeTextHex: String = ThemeDefaults.textHex
 
   var currencySymbol: String {
     switch selectedCurrency {
@@ -23,6 +25,11 @@ final class ProfileViewModel: ObservableObject {
   }
 
   private let client = SupabaseService.shared.client
+  private var themeUpdateTask: Task<Void, Never>?
+
+  deinit {
+    themeUpdateTask?.cancel()
+  }
 
   func fetchProfile() async {
     guard let userId = client.auth.currentUser?.id else { return }
@@ -44,6 +51,8 @@ final class ProfileViewModel: ObservableObject {
       if let useInventory = profile.useInventory {
         self.useInventory = useInventory
       }
+      themeBackgroundHex = (profile.themeBackground ?? ThemeDefaults.backgroundHex).uppercased()
+      themeTextHex = (profile.themeText ?? ThemeDefaults.textHex).uppercased()
     } catch {
       errorMessage = "Failed to load profile"
     }
@@ -91,6 +100,46 @@ final class ProfileViewModel: ObservableObject {
       }
     } catch {
       errorMessage = "Failed to update settings: \(error.localizedDescription)"
+    }
+  }
+
+  func updateTheme(backgroundHex: String, textHex: String) async {
+    guard let userId = client.auth.currentUser?.id else { return }
+
+    let normalizedBackground = backgroundHex.uppercased()
+    let normalizedText = textHex.uppercased()
+
+    do {
+      let updateData: [String: String] = [
+        "theme_background": normalizedBackground,
+        "theme_text": normalizedText,
+      ]
+
+      try await client
+        .from("profiles")
+        .update(updateData)
+        .eq("id", value: userId)
+        .execute()
+
+      themeBackgroundHex = normalizedBackground
+      themeTextHex = normalizedText
+
+      if var currentProfile = profile {
+        currentProfile.themeBackground = normalizedBackground
+        currentProfile.themeText = normalizedText
+        self.profile = currentProfile
+      }
+    } catch {
+      errorMessage = "Failed to update theme: \(error.localizedDescription)"
+    }
+  }
+
+  func scheduleThemeUpdate(backgroundHex: String, textHex: String) {
+    themeUpdateTask?.cancel()
+    themeUpdateTask = Task { [weak self] in
+      try? await Task.sleep(nanoseconds: 400_000_000)  // Debounce rapid color changes
+      guard !Task.isCancelled else { return }
+      await self?.updateTheme(backgroundHex: backgroundHex, textHex: textHex)
     }
   }
 
@@ -160,6 +209,8 @@ final class ProfileViewModel: ObservableObject {
       self.profile = nil
       self.selectedCurrency = "USD"
       self.useInventory = true
+      themeBackgroundHex = ThemeDefaults.backgroundHex
+      themeTextHex = ThemeDefaults.textHex
 
       do {
         try await client.auth.signOut()
