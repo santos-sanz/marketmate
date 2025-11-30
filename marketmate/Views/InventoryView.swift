@@ -78,15 +78,19 @@ struct InventoryView: View {
         } else {
           ScrollView {
             VStack(spacing: Spacing.md) {
-              // Products Grid (2 columns for inventory)
+              // Products Grid (3 columns for inventory)
               LazyVGrid(
-                columns: [GridItem(.flexible()), GridItem(.flexible())],
+                columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())],
                 spacing: Spacing.xs
               ) {
                 ForEach(filteredProducts) { product in
-                  NavigationLink(value: product) {
-                    InventoryProductCard(product: product)
-                  }
+                  Color.clear
+                    .aspectRatio(1.5, contentMode: .fit)
+                    .overlay(
+                      NavigationLink(value: product) {
+                        InventoryProductCard(product: product)
+                      }
+                    )
                 }
               }
               .padding(.horizontal, Spacing.sm)
@@ -176,9 +180,9 @@ struct InventoryProductCard: View {
   @EnvironmentObject var profileVM: ProfileViewModel
 
   var body: some View {
-    VStack(alignment: .leading, spacing: Spacing.xs) {
+    VStack(alignment: .leading, spacing: 0) {
       Text(product.name)
-        .font(Typography.headline)
+        .font(Typography.subheadline)
         .foregroundColor(.white)
         .lineLimit(2)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -187,13 +191,13 @@ struct InventoryProductCard: View {
 
       if let stock = product.stockQuantity {
         Text("\(stock) in stock")
-          .font(Typography.body)
+          .font(Typography.caption1)
           .fontWeight(.semibold)
-          .foregroundColor(stock > 0 ? .marketTextSecondary : .red)
+          .foregroundColor(stock > 0 ? .white : .red)
       }
     }
-    .frame(height: 90)
     .padding(Spacing.sm)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(Color.marketCard)
     .cornerRadius(CornerRadius.sm)
   }

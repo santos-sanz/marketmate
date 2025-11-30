@@ -144,31 +144,40 @@ struct SalesView: View {
   }
 
   private var productGrid: some View {
-    LazyVGrid(
-      columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())],
-      spacing: Spacing.xs
-    ) {
-      Button(action: { showingCustomAmount = true }) {
-        VStack(spacing: 4) {
-          Image(systemName: "keyboard")
-            .font(.title2)
-            .foregroundColor(.white)
-          Text("Custom")
-            .font(Typography.caption1)
-            .foregroundColor(.white)
-        }
-        .frame(height: 85)
-        .frame(maxWidth: .infinity)
-        .background(Color.marketBlue.opacity(0.6))
-        .cornerRadius(CornerRadius.sm)
-      }
+    VStack(spacing: Spacing.md) {
+      LazyVGrid(
+        columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())],
+        spacing: Spacing.xs
+      ) {
+        Color.clear
+          .aspectRatio(1.5, contentMode: .fit)
+          .overlay(
+            Button(action: { showingCustomAmount = true }) {
+              VStack(spacing: 4) {
+                Image(systemName: "keyboard")
+                  .font(.title2)
+                  .foregroundColor(.white)
+                Text("Custom")
+                  .font(Typography.caption1)
+                  .foregroundColor(.white)
+              }
+              .frame(maxWidth: .infinity, maxHeight: .infinity)
+              .background(Color.marketBlue.opacity(0.6))
+              .cornerRadius(CornerRadius.sm)
+            }
+          )
 
-      ForEach(filteredProducts.prefix(8)) { product in
-        ProductCard(
-          product: product,
-          action: { salesVM.addToCart(product: product) }
-        )
-        .environmentObject(profileVM)
+        ForEach(filteredProducts.prefix(8)) { product in
+          Color.clear
+            .aspectRatio(1.5, contentMode: .fit)
+            .overlay(
+              ProductCard(
+                product: product,
+                action: { salesVM.addToCart(product: product) }
+              )
+              .environmentObject(profileVM)
+            )
+        }
       }
 
       if filteredProducts.count > 8 {
@@ -178,15 +187,15 @@ struct SalesView: View {
             .environmentObject(salesVM)
             .environmentObject(profileVM)
         ) {
-          VStack(spacing: 4) {
-            Image(systemName: "square.grid.2x2")
-              .font(.title2)
-              .foregroundColor(.white)
-            Text("View All")
-              .font(Typography.caption1)
-              .foregroundColor(.white)
+          HStack {
+            Text("Show all products")
+              .font(Typography.subheadline)
+              .fontWeight(.medium)
+            Image(systemName: "arrow.right")
+              .font(.caption)
           }
-          .frame(height: 85)
+          .foregroundColor(.white)
+          .padding(.vertical, 12)
           .frame(maxWidth: .infinity)
           .background(Color.white.opacity(0.1))
           .cornerRadius(CornerRadius.sm)
@@ -384,9 +393,9 @@ struct ProductCard: View {
 
   var body: some View {
     Button(action: action) {
-      VStack(alignment: .leading, spacing: Spacing.xs) {
+      VStack(alignment: .leading, spacing: 0) {
         Text(product.name)
-          .font(Typography.headline)
+          .font(Typography.subheadline)
           .foregroundColor(.white)
           .lineLimit(2)
           .frame(maxWidth: .infinity, alignment: .leading)
@@ -394,12 +403,13 @@ struct ProductCard: View {
         Spacer()
 
         Text("\(profileVM.currencySymbol) \(String(format: "%.2f", product.price))")
-          .font(Typography.title2)
+          .font(Typography.headline)
           .fontWeight(.bold)
           .foregroundColor(.white)
       }
-      .frame(height: 85)
+
       .padding(Spacing.sm)
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
       .background(Color.marketCard)
       .cornerRadius(CornerRadius.sm)
     }
