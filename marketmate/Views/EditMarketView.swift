@@ -3,11 +3,16 @@ import SwiftUI
 struct EditMarketView: View {
   @Environment(\.dismiss) var dismiss
   @EnvironmentObject var marketSession: MarketSessionManager
+  @EnvironmentObject var themeManager: ThemeManager
 
   let market: Market
 
   @State private var name: String
   @State private var location: String
+
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
 
   init(market: Market) {
     self.market = market
@@ -22,20 +27,20 @@ struct EditMarketView: View {
           .edgesIgnoringSafeArea(.all)
 
         Form {
-          Section(header: Text("Details").foregroundColor(.marketTextSecondary)) {
+          Section(header: Text("Details").foregroundColor(secondaryTextColor)) {
             TextField("", text: $name)
               .placeholder(when: name.isEmpty) {
-                Text("Market Name").foregroundColor(Color.white.opacity(0.6))
+                Text("Market Name").foregroundColor(secondaryTextColor)
               }
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
             
             TextField("", text: $location)
               .placeholder(when: location.isEmpty) {
-                Text("Location").foregroundColor(Color.white.opacity(0.6))
+                Text("Location").foregroundColor(secondaryTextColor)
               }
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
           }
-          .listRowBackground(Color.marketCard)
+          .listRowBackground(cardBackground)
         }
         .scrollContentBackground(.hidden)
       }
@@ -45,7 +50,7 @@ struct EditMarketView: View {
           Button("Save") {
             saveMarket()
           }
-          .foregroundColor(.marketGreen)
+          .foregroundColor(textColor)
           .disabled(name.isEmpty)
         }
 
@@ -53,7 +58,7 @@ struct EditMarketView: View {
           Button("Cancel") {
             dismiss()
           }
-          .foregroundColor(.marketTextSecondary)
+          .foregroundColor(secondaryTextColor)
         }
       }
     }

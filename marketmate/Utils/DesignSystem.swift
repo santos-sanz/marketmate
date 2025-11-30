@@ -70,46 +70,50 @@ enum Shadow {
 }
 
 extension View {
-  func marketCardStyle() -> some View {
+  func marketCardStyle(themeManager: ThemeManager) -> some View {
     self
-      .background(Color.marketCard)
+      .background(themeManager.cardBackground)
       .cornerRadius(CornerRadius.sm)
       .shadow(
         color: Shadow.card.color, radius: Shadow.card.radius, x: Shadow.card.x, y: Shadow.card.y)
   }
 
-  func solidCardStyle() -> some View {
+  func solidCardStyle(themeManager: ThemeManager) -> some View {
     self
-      .background(Color.marketSurface)
+      .background(themeManager.elevatedCardBackground)
       .cornerRadius(CornerRadius.sm)
       .shadow(
         color: Shadow.card.color, radius: Shadow.card.radius, x: Shadow.card.x, y: Shadow.card.y)
   }
 
-  func primaryButtonStyle() -> some View {
+  func primaryButtonStyle(themeManager: ThemeManager) -> some View {
     self
       .font(Typography.headline)
-      .foregroundColor(.white)
+      .foregroundColor(themeManager.primaryTextColor)
       .frame(maxWidth: .infinity)
       .padding(Spacing.md)
-      .background(Color.marketBlue)
+      .background(themeManager.primaryTextColor.opacity(0.14))
+      .overlay(
+        RoundedRectangle(cornerRadius: CornerRadius.xl)
+          .stroke(themeManager.strokeColor, lineWidth: 1)
+      )
       .cornerRadius(CornerRadius.xl)
   }
 
-  func secondaryButtonStyle() -> some View {
+  func secondaryButtonStyle(themeManager: ThemeManager) -> some View {
     self
       .font(Typography.headline)
-      .foregroundColor(.white)
+      .foregroundColor(themeManager.primaryTextColor)
       .padding(.horizontal, Spacing.sm)
       .padding(.vertical, Spacing.xxs + 2)
-      .background(Color.white.opacity(0.2))
+      .background(themeManager.translucentOverlay)
       .cornerRadius(CornerRadius.sm)
   }
 
-  func iconButtonStyle(size: CGFloat = 40) -> some View {
+  func iconButtonStyle(size: CGFloat = 40, themeManager: ThemeManager) -> some View {
     self
       .frame(width: size, height: size)
-      .background(Color.white.opacity(0.2))
+      .background(themeManager.translucentOverlay)
       .clipShape(Circle())
   }
 
@@ -119,11 +123,15 @@ extension View {
     )
   }
 
-  func searchBarStyle() -> some View {
+  func searchBarStyle(themeManager: ThemeManager) -> some View {
     self
       .padding(.vertical, Spacing.xs)
       .padding(.horizontal, Spacing.sm)
-      .background(Color.white.opacity(0.2))
+      .background(themeManager.fieldBackground)
+      .overlay(
+        RoundedRectangle(cornerRadius: CornerRadius.lg)
+          .stroke(themeManager.mutedStrokeColor, lineWidth: 1)
+      )
       .cornerRadius(CornerRadius.lg)
   }
 

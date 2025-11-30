@@ -4,6 +4,12 @@ import SwiftUI
 struct ReportsView: View {
   @StateObject private var reportsVM = ReportsViewModel()
   @EnvironmentObject var profileVM: ProfileViewModel
+  @EnvironmentObject var themeManager: ThemeManager
+
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
+  private var strokeColor: Color { themeManager.strokeColor }
 
   private let metricColumns = [
     GridItem(.flexible(), spacing: 12),
@@ -50,10 +56,10 @@ struct ReportsView: View {
     VStack(alignment: .leading, spacing: 6) {
       Text("Business Report")
         .font(Typography.title2)
-        .foregroundColor(.white)
+        .foregroundColor(textColor)
       Text("Your business at a glance: revenue, costs, and daily pulse.")
         .font(Typography.caption1)
-        .foregroundColor(.marketTextSecondary)
+        .foregroundColor(secondaryTextColor)
     }
     .frame(maxWidth: .infinity, alignment: .leading)
     .padding(.horizontal)
@@ -70,21 +76,21 @@ struct ReportsView: View {
           } label: {
             Text(range.rawValue)
               .font(Typography.subheadline.weight(.semibold))
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
               .padding(.horizontal, 14)
               .padding(.vertical, 8)
               .background(
                 Capsule()
                   .fill(
                     reportsVM.selectedTimeRange == range
-                      ? Color.white.opacity(0.18)
-                      : Color.marketCard
+                      ? themeManager.primaryTextColor.opacity(0.18)
+                      : cardBackground
                   )
               )
               .overlay(
                 Capsule()
                   .stroke(
-                    reportsVM.selectedTimeRange == range ? Color.marketBlue : Color.clear,
+                    reportsVM.selectedTimeRange == range ? strokeColor : Color.clear,
                     lineWidth: 1
                   )
               )
@@ -100,10 +106,10 @@ struct ReportsView: View {
     VStack(spacing: 12) {
       Image(systemName: "hourglass")
         .font(.title3)
-        .foregroundColor(.marketTextSecondary)
+        .foregroundColor(secondaryTextColor)
       Text("Preparing your report...")
         .font(Typography.subheadline)
-        .foregroundColor(.marketTextSecondary)
+        .foregroundColor(secondaryTextColor)
     }
     .frame(maxWidth: .infinity)
     .padding(.vertical, 40)
@@ -142,22 +148,22 @@ struct ReportsView: View {
         VStack(alignment: .leading, spacing: 4) {
           Text("Net Profit")
             .font(Typography.subheadline)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(secondaryTextColor)
           Text(currency(reportsVM.netProfit))
             .font(Typography.title1)
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
         }
         Spacer()
         Capsule()
-          .fill(Color.white.opacity(0.16))
+          .fill(themeManager.translucentOverlay)
           .frame(height: 32)
           .overlay(
             HStack(spacing: 6) {
               Image(systemName: "chart.line.uptrend.xyaxis")
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
               Text("Margin \(percent(reportsVM.profitMargin))")
                 .font(Typography.caption1.weight(.semibold))
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
             }
             .padding(.horizontal, 12)
           )
@@ -179,9 +185,9 @@ struct ReportsView: View {
       }
     }
     .padding()
-    .background(Color.marketCard)
+    .background(cardBackground)
     .cornerRadius(CornerRadius.md)
-    .shadow(color: .black.opacity(0.25), radius: 10, x: 0, y: 8)
+    .shadow(color: strokeColor, radius: 10, x: 0, y: 8)
     .padding(.horizontal)
   }
 
@@ -243,7 +249,7 @@ struct ReportsView: View {
         )
       }
       .padding()
-      .background(Color.marketCard)
+      .background(cardBackground)
       .cornerRadius(CornerRadius.md)
     }
     .padding(.horizontal)
@@ -256,7 +262,7 @@ struct ReportsView: View {
       if reportsVM.salesData.isEmpty {
         Text("No sales in this period.")
           .font(Typography.caption1)
-          .foregroundColor(.marketTextSecondary)
+          .foregroundColor(secondaryTextColor)
           .frame(maxWidth: .infinity, minHeight: 120, alignment: .center)
       } else {
         Chart {
@@ -284,7 +290,7 @@ struct ReportsView: View {
               x: .value("Date", data.date, unit: .day),
               y: .value("Sales", data.amount)
             )
-            .foregroundStyle(.white)
+            .foregroundStyle(textColor)
             .symbolSize(30)
           }
         }
@@ -294,11 +300,11 @@ struct ReportsView: View {
         .chartYAxis {
           AxisMarks(position: .leading) { value in
             AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4, 4]))
-              .foregroundStyle(Color.marketTextSecondary.opacity(0.4))
+              .foregroundStyle(secondaryTextColor.opacity(0.4))
             AxisValueLabel {
               if let doubleValue = value.as(Double.self) {
                 Text("\(profileVM.currencySymbol)\(Int(doubleValue))")
-                  .foregroundColor(Color.marketTextSecondary)
+                  .foregroundColor(secondaryTextColor)
               }
             }
           }
@@ -306,16 +312,16 @@ struct ReportsView: View {
         .chartXAxis {
           AxisMarks(values: .automatic(desiredCount: 6)) { value in
             AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-              .foregroundStyle(Color.white.opacity(0.12))
+              .foregroundStyle(strokeColor)
             AxisValueLabel(format: .dateTime.day().month(), centered: true)
-              .foregroundStyle(Color.marketTextSecondary)
+              .foregroundStyle(secondaryTextColor)
           }
         }
         .frame(height: 240)
       }
     }
     .padding()
-    .background(Color.marketCard)
+    .background(cardBackground)
     .cornerRadius(CornerRadius.md)
     .padding(.horizontal)
   }
@@ -332,7 +338,7 @@ struct ReportsView: View {
       if items.isEmpty {
         Text("Not enough data yet.")
           .font(Typography.caption1)
-          .foregroundColor(.marketTextSecondary)
+          .foregroundColor(secondaryTextColor)
       } else {
         ForEach(items.prefix(4)) { item in
           BreakdownRow(
@@ -346,7 +352,7 @@ struct ReportsView: View {
       }
     }
     .padding()
-    .background(Color.marketCard)
+    .background(cardBackground)
     .cornerRadius(CornerRadius.md)
     .padding(.horizontal)
   }
@@ -355,17 +361,17 @@ struct ReportsView: View {
     VStack(spacing: 12) {
       Image(systemName: "chart.bar.doc.horizontal")
         .font(.largeTitle)
-        .foregroundColor(.marketTextSecondary)
+        .foregroundColor(secondaryTextColor)
       Text("No activity in this range yet.")
         .font(Typography.subheadline)
-        .foregroundColor(.white)
+        .foregroundColor(textColor)
       Text("Log sales or costs to unlock the full business report.")
         .font(Typography.caption1)
-        .foregroundColor(.marketTextSecondary)
+        .foregroundColor(secondaryTextColor)
     }
     .frame(maxWidth: .infinity)
     .padding()
-    .background(Color.marketCard)
+    .background(cardBackground)
     .cornerRadius(CornerRadius.md)
     .padding(.horizontal)
   }
@@ -377,10 +383,10 @@ struct ReportsView: View {
       .overlay(
         HStack(spacing: 8) {
           Image(systemName: "clock.arrow.2.circlepath")
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
           Text("Updating")
             .font(Typography.caption2)
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
         }
         .padding(.horizontal, 12)
       )
@@ -401,16 +407,16 @@ struct ReportsView: View {
       VStack(alignment: .leading, spacing: 2) {
         Text(title)
           .font(Typography.caption1)
-          .foregroundColor(.marketTextSecondary)
+          .foregroundColor(secondaryTextColor)
         Text(value)
           .font(Typography.body.weight(.semibold))
-          .foregroundColor(.white)
+          .foregroundColor(textColor)
       }
     }
     .frame(maxWidth: .infinity, alignment: .leading)
     .padding(.vertical, 8)
     .padding(.horizontal, 10)
-    .background(Color.white.opacity(0.06))
+    .background(cardBackground)
     .cornerRadius(CornerRadius.sm)
   }
 
@@ -418,10 +424,10 @@ struct ReportsView: View {
     VStack(alignment: .leading, spacing: 2) {
       Text(title)
         .font(Typography.subheadline.weight(.semibold))
-        .foregroundColor(.white)
+        .foregroundColor(textColor)
       Text(subtitle)
         .font(Typography.caption1)
-        .foregroundColor(.marketTextSecondary)
+        .foregroundColor(secondaryTextColor)
     }
   }
 
@@ -445,13 +451,17 @@ struct MetricCard: View {
   let subtitle: String
   let icon: String
   let color: Color
+  @EnvironmentObject var themeManager: ThemeManager
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack {
         Text(title)
           .font(Typography.subheadline)
-          .foregroundColor(.marketTextSecondary)
+          .foregroundColor(secondaryTextColor)
         Spacer()
         Image(systemName: icon)
           .foregroundColor(color)
@@ -459,14 +469,14 @@ struct MetricCard: View {
 
       Text(value)
         .font(Typography.title2)
-        .foregroundColor(.white)
+        .foregroundColor(textColor)
 
       Text(subtitle)
         .font(Typography.caption2)
-        .foregroundColor(.marketTextSecondary)
+        .foregroundColor(secondaryTextColor)
     }
     .padding()
-    .background(Color.marketCard)
+    .background(cardBackground)
     .cornerRadius(CornerRadius.md)
   }
 }
@@ -475,18 +485,21 @@ struct MiniStat: View {
   let title: String
   let value: String
   let caption: String
+  @EnvironmentObject var themeManager: ThemeManager
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
       Text(title)
         .font(Typography.caption1)
-        .foregroundColor(.marketTextSecondary)
+        .foregroundColor(secondaryTextColor)
       Text(value)
         .font(Typography.title3.weight(.semibold))
-        .foregroundColor(.white)
+        .foregroundColor(textColor)
       Text(caption)
         .font(Typography.caption2)
-        .foregroundColor(.marketTextSecondary)
+        .foregroundColor(secondaryTextColor)
     }
     .frame(maxWidth: .infinity, alignment: .leading)
   }
@@ -498,13 +511,18 @@ struct BreakdownRow: View {
   let percentageText: String
   let progress: Double
   let accent: Color
+  @EnvironmentObject var themeManager: ThemeManager
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var strokeColor: Color { themeManager.strokeColor }
+  private var cardBackground: Color { themeManager.cardBackground }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
       HStack {
         Text(label)
           .font(Typography.subheadline)
-          .foregroundColor(.white)
+          .foregroundColor(textColor)
         Spacer()
         Text(percentageText)
           .font(Typography.caption1.weight(.semibold))
@@ -514,7 +532,7 @@ struct BreakdownRow: View {
       HStack {
         Text(value)
           .font(Typography.caption1)
-          .foregroundColor(.marketTextSecondary)
+          .foregroundColor(secondaryTextColor)
         Spacer()
       }
 

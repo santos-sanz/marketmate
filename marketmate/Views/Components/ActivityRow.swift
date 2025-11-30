@@ -3,6 +3,7 @@ import SwiftUI
 struct ActivityRow: View {
   let activity: Activity
   let currency: String
+  @EnvironmentObject var themeManager: ThemeManager
 
   private var iconName: String {
     switch activity.type {
@@ -46,12 +47,12 @@ struct ActivityRow: View {
       VStack(alignment: .leading, spacing: 1) {
         Text(activity.title)
           .font(Typography.subheadline.weight(.medium))
-          .foregroundColor(.white)
+          .foregroundColor(themeManager.primaryTextColor)
 
         if let subtitle = activity.subtitle {
           Text(subtitle)
             .font(Typography.caption2)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(themeManager.secondaryTextColor)
             .lineLimit(1)
         }
       }
@@ -62,17 +63,17 @@ struct ActivityRow: View {
         if let qty = activity.quantity {
           Text("\(qty > 0 ? "+" : "")\(qty)")
             .font(Typography.subheadline.weight(.semibold))
-            .foregroundColor(.white)
+            .foregroundColor(themeManager.primaryTextColor)
         } else if let amount = activity.amount {
           let isPositive = activity.type == .sale
           Text("\(isPositive ? "+" : "-")\(currency)\(String(format: "%.2f", amount))")
             .font(Typography.subheadline.weight(.semibold))
-            .foregroundColor(.white)
+            .foregroundColor(themeManager.primaryTextColor)
         }
 
         Text(timestamp)
           .font(Typography.caption2)
-          .foregroundColor(.marketTextSecondary)
+          .foregroundColor(themeManager.secondaryTextColor)
       }
     }
     .padding(.vertical, 6)

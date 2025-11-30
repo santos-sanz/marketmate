@@ -2,7 +2,11 @@ import SwiftUI
 
 struct AuthView: View {
   @EnvironmentObject var authVM: AuthViewModel
+  @EnvironmentObject var themeManager: ThemeManager
   @State private var isSignUp = false
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
 
   var body: some View {
     ZStack {
@@ -12,35 +16,35 @@ struct AuthView: View {
         // Logo or Title
         Text("MarketMate")
           .font(.system(size: 40, weight: .bold, design: .rounded))
-          .foregroundColor(.white)
+          .foregroundColor(textColor)
           .padding(.top, 60)
 
         Text(isSignUp ? "Create Account" : "Welcome Back")
           .font(.title2)
-          .foregroundColor(.white)
+          .foregroundColor(textColor)
 
         VStack(spacing: 16) {
           TextField("", text: $authVM.email)
             .placeholder(when: authVM.email.isEmpty) {
-              Text("Email").foregroundColor(Color.white.opacity(0.6))
+              Text("Email").foregroundColor(secondaryTextColor)
             }
             .textContentType(.emailAddress)
             .keyboardType(.emailAddress)
             .autocapitalization(.none)
             .padding()
-            .background(Color.marketCard)
+            .background(cardBackground)
             .cornerRadius(12)
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
 
           SecureField("", text: $authVM.password)
             .placeholder(when: authVM.password.isEmpty) {
-              Text("Password").foregroundColor(Color.white.opacity(0.6))
+              Text("Password").foregroundColor(secondaryTextColor)
             }
             .textContentType(isSignUp ? .newPassword : .password)
             .padding()
-            .background(Color.marketCard)
+            .background(cardBackground)
             .cornerRadius(12)
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
         }
         .padding(.horizontal)
 
@@ -61,16 +65,16 @@ struct AuthView: View {
         }) {
           if authVM.isLoading {
             ProgressView()
-              .progressViewStyle(CircularProgressViewStyle(tint: .black))
+              .progressViewStyle(CircularProgressViewStyle(tint: textColor))
           } else {
             Text(isSignUp ? "Sign Up" : "Log In")
               .font(.headline)
-              .foregroundColor(.black)
+              .foregroundColor(textColor)
           }
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(Color.white)
+        .background(cardBackground)
         .cornerRadius(CornerRadius.xl)
         .padding(.horizontal)
 
@@ -78,7 +82,7 @@ struct AuthView: View {
           isSignUp.toggle()
         }) {
           Text(isSignUp ? "Already have an account? Log In" : "Don't have an account? Sign Up")
-            .foregroundColor(.white)
+            .foregroundColor(secondaryTextColor)
         }
 
         Spacer()

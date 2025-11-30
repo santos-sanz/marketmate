@@ -6,18 +6,16 @@ struct FeedbackView: View {
   @State private var bugDescription = ""
   @State private var showingAddFeature = false
   @Environment(\.presentationMode) var presentationMode
+  @EnvironmentObject var themeManager: ThemeManager
+
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
+  private var strokeColor: Color { themeManager.strokeColor }
 
   var body: some View {
     ZStack {
-      LinearGradient(
-        colors: [
-          Color.marketBlue,
-          Color.marketDarkBlue,
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-      )
-      .ignoresSafeArea()
+      Color.clear.revolutBackground()
 
       VStack(spacing: 0) {
         // Custom Segmented Control
@@ -25,12 +23,16 @@ struct FeedbackView: View {
           SegmentButton(title: "Report Bug", isSelected: selectedTab == 0) {
             selectedTab = 0
           }
-          SegmentButton(title: "Feature Requests", isSelected: selectedTab == 1) {
-            selectedTab = 1
-          }
+        SegmentButton(title: "Feature Requests", isSelected: selectedTab == 1) {
+          selectedTab = 1
         }
-        .padding()
-        .background(Color.white.opacity(0.1))
+      }
+      .padding()
+      .background(cardBackground)
+      .overlay(
+        RoundedRectangle(cornerRadius: 12)
+          .stroke(strokeColor, lineWidth: 1)
+      )
 
         if selectedTab == 0 {
           BugReportView(description: $bugDescription, viewModel: viewModel)
@@ -50,16 +52,19 @@ struct SegmentButton: View {
   let title: String
   let isSelected: Bool
   let action: () -> Void
+  @EnvironmentObject var themeManager: ThemeManager
 
   var body: some View {
     Button(action: action) {
       Text(title)
         .font(.subheadline)
         .fontWeight(isSelected ? .bold : .regular)
-        .foregroundColor(isSelected ? .marketBlue : .white)
+        .foregroundColor(isSelected ? themeManager.primaryTextColor : themeManager.secondaryTextColor)
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(isSelected ? Color.white : Color.clear)
+        .background(
+          isSelected ? themeManager.cardBackground : Color.clear
+        )
         .cornerRadius(8)
     }
   }
@@ -69,23 +74,28 @@ struct BugReportView: View {
   @Binding var description: String
   @ObservedObject var viewModel: FeedbackViewModel
   @State private var showingSuccess = false
+  @EnvironmentObject var themeManager: ThemeManager
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
+  private var strokeColor: Color { themeManager.strokeColor }
 
   var body: some View {
     VStack(spacing: 20) {
       Text("Found a bug? Let us know!")
         .font(.headline)
-        .foregroundColor(.white)
+        .foregroundColor(textColor)
         .padding(.top)
 
       TextEditor(text: $description)
         .frame(height: 150)
         .padding(8)
-        .background(Color.white)
+        .background(cardBackground)
         .cornerRadius(8)
-        .foregroundColor(.black)
+        .foregroundColor(textColor)
         .overlay(
           RoundedRectangle(cornerRadius: 8)
-            .stroke(Color.white.opacity(0.3), lineWidth: 1)
+            .stroke(strokeColor, lineWidth: 1)
         )
         .padding(.horizontal)
 
@@ -98,14 +108,14 @@ struct BugReportView: View {
         }
       }) {
         if viewModel.isLoading {
-          ProgressView().tint(.white)
+          ProgressView().tint(textColor)
         } else {
           Text("Submit Bug Report")
             .fontWeight(.bold)
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
             .frame(maxWidth: .infinity)
             .padding()
-            .background(Color.marketBlue)
+            .background(cardBackground)
             .cornerRadius(12)
         }
       }
@@ -126,11 +136,16 @@ struct BugReportView: View {
 struct FeatureRequestListView: View {
   @ObservedObject var viewModel: FeedbackViewModel
   @Binding var showingAddFeature: Bool
+  @EnvironmentObject var themeManager: ThemeManager
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
+  private var strokeColor: Color { themeManager.strokeColor }
 
   var body: some View {
     ZStack {
       if viewModel.isLoading && viewModel.featureRequests.isEmpty {
-        ProgressView().tint(.white)
+        ProgressView().tint(textColor)
       } else {
         ScrollView {
           LazyVStack(spacing: 12) {
@@ -153,11 +168,11 @@ struct FeatureRequestListView: View {
           Button(action: { showingAddFeature = true }) {
             Image(systemName: "plus")
               .font(.title)
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
               .frame(width: 60, height: 60)
-              .background(Color.marketBlue)
+              .background(cardBackground)
               .clipShape(Circle())
-              .shadow(radius: 4)
+              .shadow(color: strokeColor, radius: 4)
           }
           .padding()
         }
@@ -177,16 +192,20 @@ struct FeatureRequestListView: View {
 struct FeatureRow: View {
   let feature: FeatureRequest
   @ObservedObject var viewModel: FeedbackViewModel
+  @EnvironmentObject var themeManager: ThemeManager
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
 
   var body: some View {
     HStack(alignment: .top, spacing: 12) {
       VStack(alignment: .leading, spacing: 4) {
         Text(feature.title)
           .font(.headline)
-          .foregroundColor(.white)
+          .foregroundColor(textColor)
         Text(feature.description)
           .font(.caption)
-          .foregroundColor(.white.opacity(0.7))
+          .foregroundColor(secondaryTextColor)
           .lineLimit(3)
       }
 
@@ -200,20 +219,20 @@ struct FeatureRow: View {
         VStack(spacing: 4) {
           Image(systemName: "arrow.up.circle.fill")
             .font(.title2)
-            .foregroundColor(feature.hasVoted == true ? .marketGreen : .white.opacity(0.3))
+            .foregroundColor(feature.hasVoted == true ? .marketGreen : secondaryTextColor)
 
           Text("\(feature.votes)")
             .font(.caption)
             .fontWeight(.bold)
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
         }
         .padding(8)
-        .background(Color.white.opacity(0.1))
+        .background(cardBackground)
         .cornerRadius(8)
       }
     }
     .padding()
-    .background(Color.marketCard)
+    .background(cardBackground)
     .cornerRadius(12)
   }
 }
@@ -223,38 +242,34 @@ struct AddFeatureView: View {
   @Environment(\.presentationMode) var presentationMode
   @State private var title = ""
   @State private var description = ""
+  @EnvironmentObject var themeManager: ThemeManager
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
 
   var body: some View {
     ZStack {
-      LinearGradient(
-        colors: [
-          Color.marketBlue,
-          Color.marketDarkBlue,
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-      )
-      .ignoresSafeArea()
+      Color.clear.revolutBackground()
 
       Form {
-        Section(header: Text("Feature Details").foregroundColor(.white.opacity(0.7))) {
+        Section(header: Text("Feature Details").foregroundColor(secondaryTextColor)) {
           TextField("Title", text: $title)
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
 
           ZStack(alignment: .topLeading) {
             if description.isEmpty {
               Text("Description")
-                .foregroundColor(.white.opacity(0.3))
+                .foregroundColor(secondaryTextColor)
                 .padding(.top, 8)
                 .padding(.leading, 4)
             }
             TextEditor(text: $description)
               .frame(height: 100)
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
               .scrollContentBackground(.hidden)
           }
         }
-        .listRowBackground(Color.white.opacity(0.15))
+        .listRowBackground(cardBackground)
 
         Section {
           Button(action: {
@@ -269,11 +284,11 @@ struct AddFeatureView: View {
             } else {
               Text("Submit Request")
                 .fontWeight(.bold)
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
                 .frame(maxWidth: .infinity)
             }
           }
-          .listRowBackground(Color.marketBlue)
+          .listRowBackground(cardBackground)
           .disabled(title.isEmpty || description.isEmpty)
         }
       }

@@ -7,6 +7,13 @@ struct InventoryView: View {
   @State private var searchText = ""
   @State private var selectedProduct: Product?
   @State private var activities: [Activity] = []
+  @EnvironmentObject var themeManager: ThemeManager
+
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
+  private var fieldBackground: Color { themeManager.fieldBackground }
+  private var strokeColor: Color { themeManager.strokeColor }
 
   var filteredProducts: [Product] {
     if searchText.isEmpty {
@@ -28,28 +35,32 @@ struct InventoryView: View {
             Image(systemName: "person.crop.circle.fill")
               .resizable()
               .frame(width: 40, height: 40)
-              .foregroundColor(.white.opacity(0.8))
+              .foregroundColor(secondaryTextColor)
           }
 
           // Search Bar
           HStack {
             Image(systemName: "magnifyingglass")
-              .foregroundColor(.white.opacity(0.8))
+              .foregroundColor(secondaryTextColor)
             TextField("", text: $searchText)
-              .foregroundColor(.white)
-              .accentColor(.white)
+              .foregroundColor(textColor)
+              .accentColor(textColor)
               .placeholder(when: searchText.isEmpty) {
-                Text("Search").foregroundColor(.white)
+                Text("Search").foregroundColor(secondaryTextColor)
               }
           }
           .padding(.vertical, 8)
           .padding(.horizontal, 12)
-          .background(Color.white.opacity(0.3))
+          .background(fieldBackground)
+          .overlay(
+            RoundedRectangle(cornerRadius: 20)
+              .stroke(strokeColor, lineWidth: 1)
+          )
           .cornerRadius(20)
 
           Button(action: {}) {
             Image(systemName: "chart.bar.xaxis")
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
               .font(Typography.title3)
           }
         }
@@ -60,18 +71,18 @@ struct InventoryView: View {
         // Content
         if inventoryVM.isLoading {
           ProgressView()
-            .progressViewStyle(CircularProgressViewStyle(tint: .marketBlue))
+            .progressViewStyle(CircularProgressViewStyle(tint: textColor))
         } else if inventoryVM.products.isEmpty {
           VStack(spacing: 20) {
             Image(systemName: "cube.box")
               .font(.system(size: 60))
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(secondaryTextColor)
             Text("No products yet")
               .font(.title2)
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(secondaryTextColor)
             Button(action: { showingAddProduct = true }) {
               Text("Add your first product")
-                .primaryButtonStyle()
+                .primaryButtonStyle(themeManager: themeManager)
                 .frame(width: 200)
             }
           }
@@ -100,7 +111,7 @@ struct InventoryView: View {
                 HStack {
                   Text("Recent Activity")
                     .font(Typography.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(textColor)
                   Spacer()
                   NavigationLink(
                     destination: ActivityHistoryView(initialFilter: .products).environmentObject(
@@ -108,7 +119,7 @@ struct InventoryView: View {
                   ) {
                     Text("Show all")
                       .font(.subheadline)
-                      .foregroundColor(.marketBlue)
+                      .foregroundColor(textColor)
                   }
                 }
                 .padding(.horizontal, Spacing.sm)
@@ -138,11 +149,11 @@ struct InventoryView: View {
             Button(action: { showingAddProduct = true }) {
               Image(systemName: "plus")
                 .font(.title)
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
                 .frame(width: 60, height: 60)
-                .background(Color.marketBlue)
+                .background(cardBackground)
                 .clipShape(Circle())
-                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 4)
+                .shadow(color: strokeColor, radius: 4, x: 0, y: 4)
             }
             .padding()
           }
@@ -178,12 +189,13 @@ struct InventoryView: View {
 struct InventoryProductCard: View {
   let product: Product
   @EnvironmentObject var profileVM: ProfileViewModel
+  @EnvironmentObject var themeManager: ThemeManager
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
       Text(product.name)
         .font(Typography.subheadline)
-        .foregroundColor(.white)
+        .foregroundColor(themeManager.primaryTextColor)
         .lineLimit(2)
         .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -193,12 +205,12 @@ struct InventoryProductCard: View {
         Text("\(stock) in stock")
           .font(Typography.caption1)
           .fontWeight(.semibold)
-          .foregroundColor(stock > 0 ? .white : .red)
+          .foregroundColor(stock > 0 ? themeManager.primaryTextColor : .red)
       }
     }
     .padding(Spacing.sm)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Color.marketCard)
+    .background(themeManager.cardBackground)
     .cornerRadius(CornerRadius.sm)
   }
 }

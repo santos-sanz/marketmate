@@ -68,7 +68,7 @@ struct ProfileView: View {
                     isOn: $profileVM.useInventory
                   )
                 }
-                .marketCardStyle()
+                .marketCardStyle(themeManager: themeManager)
               }
               .padding(.horizontal, Spacing.md)
 
@@ -100,7 +100,7 @@ struct ProfileView: View {
                   .padding(Spacing.md)
                   .contentShape(Rectangle())
                 }
-                .marketCardStyle()
+                .marketCardStyle(themeManager: themeManager)
               }
               .padding(.horizontal, Spacing.md)
 
@@ -124,7 +124,7 @@ struct ProfileView: View {
                       icon: "square.and.arrow.up", title: "Download Data (CSV)", showChevron: true)
                   }
                 }
-                .marketCardStyle()
+                .marketCardStyle(themeManager: themeManager)
               }
               .padding(.horizontal, Spacing.md)
 
@@ -144,7 +144,7 @@ struct ProfileView: View {
                     )
                   }
                 }
-                .marketCardStyle()
+                .marketCardStyle(themeManager: themeManager)
               }
               .padding(.horizontal, Spacing.md)
 
@@ -171,7 +171,7 @@ struct ProfileView: View {
                     ProfileRow(icon: "trash", title: "Delete Account", titleColor: .marketRed)
                   }
                 }
-                .marketCardStyle()
+                .marketCardStyle(themeManager: themeManager)
               }
               .padding(.horizontal, Spacing.md)
             }
@@ -308,6 +308,7 @@ struct ProfileToggleRow: View {
 struct ThemeSplitCircle: View {
   let backgroundHex: String
   let textHex: String
+  @EnvironmentObject var themeManager: ThemeManager
 
   var body: some View {
     ZStack {
@@ -325,7 +326,7 @@ struct ThemeSplitCircle: View {
 
       // Border
       Circle()
-        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+        .stroke(themeManager.strokeColor, lineWidth: 1)
     }
   }
 }

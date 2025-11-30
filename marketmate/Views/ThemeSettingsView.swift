@@ -5,7 +5,7 @@ struct ThemeSettingsView: View {
   @EnvironmentObject var themeManager: ThemeManager
   @Environment(\.dismiss) var dismiss
 
-  @State private var customColor = Color.white
+  @State private var customColor = Color(hex: ThemeDefaults.backgroundHex)
   @State private var isCustomColorPickerPresented = false
   @State private var isBackgroundExpanded = false
 
@@ -72,19 +72,19 @@ struct ThemeSettingsView: View {
                       .frame(width: 36, height: 36)
                       .overlay(
                         Circle()
-                          .stroke(Color.white.opacity(0.2), lineWidth: 2)
+                          .stroke(themeManager.strokeColor, lineWidth: 2)
                       )
                       .overlay(
                         Image(systemName: "plus")
                           .font(.system(size: 14, weight: .bold))
-                          .foregroundColor(.white)
+                          .foregroundColor(themeManager.primaryTextColor)
                           .shadow(radius: 2)
                       )
                   }
                 }
                 .padding(.vertical, 4)
               }
-              .marketCardStyle()
+              .marketCardStyle(themeManager: themeManager)
               .transition(.opacity.combined(with: .move(edge: .top)))
             } else {
               Button(action: {
@@ -112,7 +112,7 @@ struct ThemeSettingsView: View {
                 .padding(Spacing.md)
                 .contentShape(Rectangle())
               }
-              .marketCardStyle()
+              .marketCardStyle(themeManager: themeManager)
             }
           }
 
@@ -139,7 +139,7 @@ struct ThemeSettingsView: View {
               }
               .padding(.vertical, 4)
             }
-            .marketCardStyle()
+            .marketCardStyle(themeManager: themeManager)
           }
         }
         .padding(Spacing.md)
@@ -169,7 +169,7 @@ struct ThemeSettingsView: View {
           }
         }) {
           Text("Apply Color")
-            .primaryButtonStyle()
+            .primaryButtonStyle(themeManager: themeManager)
         }
         .padding(.horizontal)
       }
@@ -236,6 +236,13 @@ struct ColorChip: View {
   let color: Color
   let isSelected: Bool
   var showBorder: Bool = false
+  @EnvironmentObject var themeManager: ThemeManager
+
+  private var borderColor: Color {
+    if showBorder { return themeManager.primaryTextColor.opacity(0.6) }
+    if isSelected { return themeManager.primaryTextColor.opacity(0.9) }
+    return themeManager.strokeColor
+  }
 
   var body: some View {
     Circle()
@@ -243,7 +250,7 @@ struct ColorChip: View {
       .frame(width: 36, height: 36)
       .overlay(
         Circle()
-          .stroke(Color.white.opacity(showBorder ? 0.6 : (isSelected ? 0.9 : 0.2)), lineWidth: 2)
+          .stroke(borderColor, lineWidth: 2)
       )
       .overlay(
         Group {

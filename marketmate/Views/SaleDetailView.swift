@@ -4,74 +4,78 @@ struct SaleDetailView: View {
   @EnvironmentObject var salesVM: SalesViewModel
   @EnvironmentObject var profileVM: ProfileViewModel
   @Environment(\.presentationMode) var presentationMode
+  @EnvironmentObject var themeManager: ThemeManager
 
   let sale: Sale
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
 
   var body: some View {
     ZStack {
       Color.clear.revolutBackground()
 
       List {
-        Section(header: Text("Sale Information").foregroundColor(.white.opacity(0.7))) {
+        Section(header: Text("Sale Information").foregroundColor(secondaryTextColor)) {
           HStack {
             Text("Date")
-              .foregroundColor(.white.opacity(0.7))
+              .foregroundColor(secondaryTextColor)
             Spacer()
             Text(sale.createdAt.formatted(date: .abbreviated, time: .shortened))
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
           }
 
           HStack {
             Text("Payment Method")
-              .foregroundColor(.white.opacity(0.7))
+              .foregroundColor(secondaryTextColor)
             Spacer()
             Text(sale.paymentMethod)
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
           }
 
           if let location = sale.marketLocation {
             HStack {
               Text("Location")
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(secondaryTextColor)
               Spacer()
               Text(location)
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
             }
           }
         }
-        .listRowBackground(Color.white.opacity(0.15))
+        .listRowBackground(cardBackground)
 
-        Section(header: Text("Items").foregroundColor(.white.opacity(0.7))) {
+        Section(header: Text("Items").foregroundColor(secondaryTextColor)) {
           if let items = sale.items {
             ForEach(items) { item in
               HStack {
                 Text("\(item.quantity)x \(item.productName)")
-                  .foregroundColor(.white)
+                  .foregroundColor(textColor)
                 Spacer()
                 Text(
                   "\(profileVM.selectedCurrency) \(String(format: "%.2f", item.priceAtSale * Double(item.quantity)))"
                 )
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
               }
             }
           } else {
             Text("No items")
-              .foregroundColor(.white.opacity(0.7))
+              .foregroundColor(secondaryTextColor)
           }
         }
-        .listRowBackground(Color.white.opacity(0.15))
+        .listRowBackground(cardBackground)
 
-        Section(header: Text("Total").foregroundColor(.white.opacity(0.7))) {
+        Section(header: Text("Total").foregroundColor(secondaryTextColor)) {
           HStack {
             Text("Total Amount")
-              .foregroundColor(.white.opacity(0.7))
+              .foregroundColor(secondaryTextColor)
             Spacer()
             Text("\(profileVM.selectedCurrency) \(String(format: "%.2f", sale.totalAmount))")
               .font(.headline)
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
           }
         }
-        .listRowBackground(Color.white.opacity(0.15))
+        .listRowBackground(cardBackground)
       }
       .scrollContentBackground(.hidden)
     }

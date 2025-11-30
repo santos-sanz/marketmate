@@ -8,11 +8,12 @@ struct StartMarketModal: View {
   let onStart: () -> Void
 
   @State private var showingPermissionAlert = false
+  @EnvironmentObject var themeManager: ThemeManager
 
   var body: some View {
     ZStack {
       // Dimmed background
-      Color.black.opacity(0.4)
+      themeManager.backgroundColor.opacity(0.85)
         .edgesIgnoringSafeArea(.all)
         .onTapGesture {
           isPresented = false
@@ -22,29 +23,29 @@ struct StartMarketModal: View {
       VStack(spacing: 20) {
         Text("Open Market")
           .font(Typography.title3)
-          .foregroundColor(.black)
+          .foregroundColor(themeManager.primaryTextColor)
           .bold()
 
         Text("Click the location button to autofill the text.")
           .font(Typography.caption1)
-          .foregroundColor(.gray)
+          .foregroundColor(themeManager.secondaryTextColor)
           .multilineTextAlignment(.center)
 
         HStack(spacing: 12) {
           TextField("Market Name", text: $marketName)
             .padding(12)
-            .background(Color.gray.opacity(0.1))
+            .background(themeManager.fieldBackground)
             .cornerRadius(8)
-            .foregroundColor(.black)
+            .foregroundColor(themeManager.primaryTextColor)
 
           Button(action: {
             autoFillLocation()
           }) {
             Image(systemName: "location.fill")
               .font(.system(size: 20))
-              .foregroundColor(.white)
+              .foregroundColor(themeManager.primaryTextColor)
               .frame(width: 44, height: 44)
-              .background(Color.marketBlue)
+              .background(themeManager.translucentOverlay)
               .cornerRadius(8)
           }
         }
@@ -55,10 +56,10 @@ struct StartMarketModal: View {
           }) {
             Text("Cancel")
               .font(Typography.body)
-              .foregroundColor(.gray)
+              .foregroundColor(themeManager.secondaryTextColor)
               .frame(maxWidth: .infinity)
               .padding()
-              .background(Color.gray.opacity(0.1))
+              .background(themeManager.fieldBackground)
               .cornerRadius(12)
           }
 
@@ -68,19 +69,19 @@ struct StartMarketModal: View {
             Text("Start")
               .font(Typography.body)
               .bold()
-              .foregroundColor(.white)
+              .foregroundColor(themeManager.primaryTextColor)
               .frame(maxWidth: .infinity)
               .padding()
-              .background(Color.marketBlue)
+              .background(themeManager.primaryTextColor.opacity(0.12))
               .cornerRadius(12)
           }
         }
       }
       .padding(24)
-      .background(Color.white)
+      .background(themeManager.elevatedCardBackground)
       .cornerRadius(20)
       .padding(.horizontal, 40)
-      .shadow(radius: 10)
+      .shadow(color: themeManager.strokeColor, radius: 10)
     }
     .alert("Location Access Denied", isPresented: $showingPermissionAlert) {
       Button("OK", role: .cancel) {}

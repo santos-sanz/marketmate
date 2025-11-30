@@ -5,6 +5,7 @@ struct MainTabView: View {
   @StateObject private var salesVM = SalesViewModel()
   @StateObject private var costsVM = CostsViewModel()
   @EnvironmentObject var profileVM: ProfileViewModel
+  @EnvironmentObject var themeManager: ThemeManager
   @State private var selectedTab = 0
 
   var body: some View {
@@ -51,7 +52,7 @@ struct MainTabView: View {
       }
       .tag(3)
     }
-    .tint(.white)
+    .tint(themeManager.tabTint)
     .onChange(of: profileVM.useInventory) { newValue in
       if !newValue, selectedTab == 2 {
         selectedTab = 0

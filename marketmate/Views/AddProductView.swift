@@ -4,6 +4,7 @@ struct AddProductView: View {
   @EnvironmentObject var inventoryVM: InventoryViewModel
   @EnvironmentObject var profileVM: ProfileViewModel
   @Environment(\.presentationMode) var presentationMode
+  @EnvironmentObject var themeManager: ThemeManager
 
   var productToEdit: Product?
 
@@ -13,6 +14,11 @@ struct AddProductView: View {
   @State private var stock = ""
   @State private var categoryId: UUID?
   @State private var description = ""
+
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
+  private var fieldBackground: Color { themeManager.fieldBackground }
 
   init(productToEdit: Product? = nil) {
     self.productToEdit = productToEdit
@@ -32,39 +38,39 @@ struct AddProductView: View {
         .edgesIgnoringSafeArea(.all)
 
       Form {
-        Section(header: Text("Details").foregroundColor(.marketTextSecondary)) {
+        Section(header: Text("Details").foregroundColor(secondaryTextColor)) {
           TextField("", text: $name)
             .placeholder(when: name.isEmpty) {
-              Text("Product Name").foregroundColor(Color.white.opacity(0.6))
+              Text("Product Name").foregroundColor(secondaryTextColor)
             }
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
         }
-        .listRowBackground(Color.marketCard)
+        .listRowBackground(cardBackground)
 
-        Section(header: Text("Pricing & Stock").foregroundColor(.marketTextSecondary)) {
+        Section(header: Text("Pricing & Stock").foregroundColor(secondaryTextColor)) {
           TextField("", text: $price)
             .placeholder(when: price.isEmpty) {
-              Text("\(profileVM.currencySymbol) Price").foregroundColor(Color.white.opacity(0.6))
+              Text("\(profileVM.currencySymbol) Price").foregroundColor(secondaryTextColor)
             }
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
             .currencyInput(text: $price)
 
           TextField("", text: $stock)
             .placeholder(when: stock.isEmpty) {
-              Text("Stock Quantity").foregroundColor(Color.white.opacity(0.6))
+              Text("Stock Quantity").foregroundColor(secondaryTextColor)
             }
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
             .keyboardType(.numberPad)
         }
-        .listRowBackground(Color.marketCard)
+        .listRowBackground(cardBackground)
 
-        Section(header: Text("Additional Information").foregroundColor(.marketTextSecondary)) {
+        Section(header: Text("Additional Information").foregroundColor(secondaryTextColor)) {
           TextField("", text: $cost)
             .placeholder(when: cost.isEmpty) {
               Text("\(profileVM.currencySymbol) Cost (Optional)").foregroundColor(
-                Color.white.opacity(0.6))
+                secondaryTextColor)
             }
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
             .currencyInput(text: $cost)
 
           CategoryPicker(
@@ -80,11 +86,11 @@ struct AddProductView: View {
 
           TextField("", text: $description)
             .placeholder(when: description.isEmpty) {
-              Text("Description").foregroundColor(Color.white.opacity(0.6))
+              Text("Description").foregroundColor(secondaryTextColor)
             }
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
         }
-        .listRowBackground(Color.marketCard)
+        .listRowBackground(cardBackground)
       }
       .scrollContentBackground(.hidden)
     }
@@ -95,7 +101,7 @@ struct AddProductView: View {
         Button("Save") {
           saveProduct()
         }
-        .foregroundColor(.white)
+        .foregroundColor(textColor)
         .disabled(name.isEmpty || price.isEmpty)
       }
     }

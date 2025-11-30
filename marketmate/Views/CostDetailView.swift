@@ -4,6 +4,7 @@ struct CostDetailView: View {
   @EnvironmentObject var costsVM: CostsViewModel
   @EnvironmentObject var profileVM: ProfileViewModel
   @Environment(\.presentationMode) var presentationMode
+  @EnvironmentObject var themeManager: ThemeManager
 
   let cost: Cost
 
@@ -12,6 +13,10 @@ struct CostDetailView: View {
   @State private var editedAmount: String
   @State private var editedCategoryId: UUID?
   @State private var showingDeleteAlert = false
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
+  private var strokeColor: Color { themeManager.strokeColor }
 
   init(cost: Cost) {
     self.cost = cost
@@ -25,10 +30,10 @@ struct CostDetailView: View {
       Color.clear.revolutBackground()
 
       Form {
-        Section(header: Text("Cost Information").foregroundColor(.white.opacity(0.7))) {
+        Section(header: Text("Cost Information").foregroundColor(secondaryTextColor)) {
           if isEditing {
             TextField("Description", text: $editedDescription)
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
 
             CategoryPicker(
               selectedCategoryId: $editedCategoryId,
@@ -43,59 +48,59 @@ struct CostDetailView: View {
           } else {
             HStack {
               Text("Description")
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(secondaryTextColor)
               Spacer()
               Text(cost.description)
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
             }
             if let categoryId = cost.categoryId,
               let categoryName = costsVM.categories.first(where: { $0.id == categoryId })?.name
             {
               HStack {
                 Text("Category")
-                  .foregroundColor(.white.opacity(0.7))
+                  .foregroundColor(secondaryTextColor)
                 Spacer()
                 Text(categoryName)
-                  .foregroundColor(.white)
+                  .foregroundColor(textColor)
               }
             }
           }
         }
-        .listRowBackground(Color.white.opacity(0.15))
+        .listRowBackground(cardBackground)
 
-        Section(header: Text("Amount").foregroundColor(.white.opacity(0.7))) {
+        Section(header: Text("Amount").foregroundColor(secondaryTextColor)) {
           if isEditing {
             HStack {
               Text("Amount")
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(secondaryTextColor)
               Spacer()
               TextField("\(profileVM.currencySymbol) 0.00", text: $editedAmount)
                 .currencyInput(text: $editedAmount)
                 .multilineTextAlignment(.trailing)
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
             }
           } else {
             HStack {
               Text("Amount")
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(secondaryTextColor)
               Spacer()
               Text("\(profileVM.selectedCurrency) \(String(format: "%.2f", cost.amount))")
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
             }
           }
         }
-        .listRowBackground(Color.white.opacity(0.15))
+        .listRowBackground(cardBackground)
 
-        Section(header: Text("Date").foregroundColor(.white.opacity(0.7))) {
+        Section(header: Text("Date").foregroundColor(secondaryTextColor)) {
           HStack {
             Text("Created")
-              .foregroundColor(.white.opacity(0.7))
+              .foregroundColor(secondaryTextColor)
             Spacer()
             Text(cost.createdAt.formatted(date: .abbreviated, time: .shortened))
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
           }
         }
-        .listRowBackground(Color.white.opacity(0.15))
+        .listRowBackground(cardBackground)
 
         Section {
           Button(action: { showingDeleteAlert = true }) {
@@ -108,7 +113,7 @@ struct CostDetailView: View {
             }
           }
         }
-        .listRowBackground(Color.white.opacity(0.15))
+        .listRowBackground(cardBackground)
       }
       .scrollContentBackground(.hidden)
     }
@@ -120,12 +125,12 @@ struct CostDetailView: View {
           Button("Save") {
             saveChanges()
           }
-          .foregroundColor(.white)
+          .foregroundColor(textColor)
         } else {
           Button("Edit") {
             isEditing = true
           }
-          .foregroundColor(.white)
+          .foregroundColor(textColor)
         }
       }
     }

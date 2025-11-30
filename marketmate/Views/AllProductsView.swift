@@ -5,8 +5,14 @@ struct AllProductsView: View {
   @EnvironmentObject var salesVM: SalesViewModel
   @EnvironmentObject var profileVM: ProfileViewModel
   @Environment(\.dismiss) var dismiss
+  @EnvironmentObject var themeManager: ThemeManager
 
   @State private var searchText = ""
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
+  private var fieldBackground: Color { themeManager.fieldBackground }
+  private var strokeColor: Color { themeManager.strokeColor }
 
   var filteredProducts: [Product] {
     if searchText.isEmpty {
@@ -32,14 +38,14 @@ struct AllProductsView: View {
           Button(action: { dismiss() }) {
             Image(systemName: "chevron.left")
               .font(.title2)
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
           }
 
           Spacer()
 
           Text("All Products")
             .font(.headline)
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
 
           Spacer()
 
@@ -49,20 +55,20 @@ struct AllProductsView: View {
             .foregroundColor(.clear)
         }
         .padding()
-        .background(Color.white.opacity(0.1))
+        .background(themeManager.translucentOverlay)
 
         // Search Bar
         HStack {
           Image(systemName: "magnifyingglass")
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(secondaryTextColor)
           TextField("Search products", text: $searchText)
-            .foregroundColor(.white)
-            .accentColor(.white)
+            .foregroundColor(textColor)
+            .accentColor(textColor)
             .placeholder(when: searchText.isEmpty) {
-              Text("Search products").foregroundColor(.marketTextSecondary)
+              Text("Search products").foregroundColor(secondaryTextColor)
             }
         }
-        .searchBarStyle()
+        .searchBarStyle(themeManager: themeManager)
         .padding()
 
         ScrollView {
@@ -92,17 +98,17 @@ struct AllProductsView: View {
                 Text("\(salesVM.cartItems.reduce(0) { $0 + $1.quantity }) items")
                   .font(.caption)
                   .fontWeight(.medium)
-                  .foregroundColor(.white.opacity(0.8))
+                  .foregroundColor(textColor.opacity(0.8))
                 
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                   Text("Total")
                     .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundColor(textColor.opacity(0.8))
                   
                   Text("\(profileVM.currencySymbol) \(String(format: "%.2f", salesVM.cartTotal))")
                     .font(.title2)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundColor(textColor)
                 }
               }
               
@@ -118,10 +124,10 @@ struct AllProductsView: View {
                   Image(systemName: "cart.fill")
                     .font(.headline)
                 }
-                .foregroundColor(.marketBlue)
+                .foregroundColor(textColor)
                 .padding(.vertical, 12)
                 .padding(.horizontal, 20)
-                .background(Color.white)
+                .background(cardBackground)
                 .cornerRadius(30)
               }
             }
@@ -131,11 +137,11 @@ struct AllProductsView: View {
           }
           .background(
             Rectangle()
-              .fill(.ultraThinMaterial)
-              .overlay(Color.black.opacity(0.2))
+              .fill(themeManager.elevatedCardBackground)
+              .overlay(themeManager.translucentOverlay)
           )
           .cornerRadius(24, corners: [.topLeft, .topRight])
-          .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: -5)
+          .shadow(color: strokeColor, radius: 10, x: 0, y: -5)
         }
       }
     }
@@ -148,6 +154,7 @@ struct ProductCardWithQuantity: View {
   let quantity: Int
   let action: () -> Void
   @EnvironmentObject var profileVM: ProfileViewModel
+  @EnvironmentObject var themeManager: ThemeManager
 
   var body: some View {
     Button(action: action) {
@@ -155,7 +162,7 @@ struct ProductCardWithQuantity: View {
         HStack(alignment: .top) {
           Text(product.name)
             .font(Typography.headline)
-            .foregroundColor(.white)
+            .foregroundColor(themeManager.primaryTextColor)
             .lineLimit(2)
             .multilineTextAlignment(.leading)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -164,9 +171,9 @@ struct ProductCardWithQuantity: View {
             Text("\(quantity)")
               .font(.caption)
               .fontWeight(.bold)
-              .foregroundColor(.white)
+              .foregroundColor(themeManager.primaryTextColor)
               .padding(6)
-              .background(Color.marketGreen)
+              .background(themeManager.primaryTextColor.opacity(0.18))
               .clipShape(Circle())
           }
         }
@@ -176,15 +183,15 @@ struct ProductCardWithQuantity: View {
         Text("\(profileVM.currencySymbol) \(String(format: "%.2f", product.price))")
           .font(Typography.title2)
           .fontWeight(.bold)
-          .foregroundColor(.white)
+          .foregroundColor(themeManager.primaryTextColor)
       }
       .frame(height: 100)
       .padding(Spacing.sm)
-      .background(Color.marketCard)
+      .background(themeManager.cardBackground)
       .cornerRadius(CornerRadius.sm)
       .overlay(
         RoundedRectangle(cornerRadius: CornerRadius.sm)
-          .stroke(quantity > 0 ? Color.marketGreen : Color.clear, lineWidth: 2)
+          .stroke(quantity > 0 ? themeManager.strokeColor : Color.clear, lineWidth: 2)
       )
     }
   }

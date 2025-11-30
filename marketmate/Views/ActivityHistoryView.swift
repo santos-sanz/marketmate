@@ -7,10 +7,16 @@ struct ActivityHistoryView: View {
   @EnvironmentObject var inventoryVM: InventoryViewModel
   @EnvironmentObject var costsVM: CostsViewModel
   @EnvironmentObject var salesVM: SalesViewModel
+  @EnvironmentObject var themeManager: ThemeManager
 
   @State private var showingFilters = false
   @State private var expandedActivityId: UUID? = nil
   @State private var sheetType: SheetType?
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
+  private var fieldBackground: Color { themeManager.fieldBackground }
+  private var strokeColor: Color { themeManager.strokeColor }
 
   enum SheetType: Identifiable {
     case editProduct(Product)
@@ -40,36 +46,40 @@ struct ActivityHistoryView: View {
           HStack(spacing: 12) {
             HStack {
               Image(systemName: "magnifyingglass")
-                .foregroundColor(.marketTextSecondary)
+                .foregroundColor(secondaryTextColor)
               TextField("Search", text: $viewModel.searchText)
-                .foregroundColor(.white)
-                .accentColor(.white)
+                .foregroundColor(textColor)
+                .accentColor(textColor)
             }
             .padding(10)
-            .background(Color.white.opacity(0.1))
+            .background(fieldBackground)
+            .overlay(
+              RoundedRectangle(cornerRadius: 10)
+                .stroke(strokeColor, lineWidth: 1)
+            )
             .cornerRadius(10)
 
             Button(action: { showingFilters = true }) {
               Image(systemName: "slider.horizontal.3")
                 .font(.system(size: 20))
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
                 .frame(width: 44, height: 44)
-                .background(Color.white.opacity(0.1))
+                .background(themeManager.translucentOverlay)
                 .cornerRadius(10)
             }
           }
           .padding(.horizontal)
           .padding(.vertical, 12)
-          .background(Color.white.opacity(0.05))
+          .background(themeManager.translucentOverlay)
 
           if viewModel.isLoading {
             Spacer()
             ProgressView()
-              .tint(.white)
+              .tint(textColor)
           } else if viewModel.activities.isEmpty {
             Spacer()
             Text("No activities found")
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(secondaryTextColor)
             Spacer()
           } else {
             ScrollView {
@@ -78,7 +88,7 @@ struct ActivityHistoryView: View {
                   VStack(alignment: .leading, spacing: 8) {
                     Text(group.key)
                       .font(.headline)
-                      .foregroundColor(.white)
+                      .foregroundColor(textColor)
                       .padding(.horizontal)
 
                     VStack(spacing: 0) {
@@ -113,13 +123,13 @@ struct ActivityHistoryView: View {
 
                           if activity.id != group.value.last?.id {
                             Divider()
-                              .background(Color.white.opacity(0.1))
+                              .background(strokeColor)
                               .padding(.leading, 50)
                           }
                         }
                       }
                     }
-                    .background(Color.marketCard)
+                    .background(cardBackground)
                     .cornerRadius(16)
                     .padding(.horizontal)
                   }
@@ -191,18 +201,24 @@ struct FilterChip: View {
   let title: String
   let isSelected: Bool
   let action: () -> Void
+  @EnvironmentObject var themeManager: ThemeManager
+
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
 
   var body: some View {
     Button(action: action) {
       Text(title)
         .font(.subheadline)
         .fontWeight(.medium)
-        .foregroundColor(isSelected ? .black : .white)
+        .foregroundColor(isSelected ? textColor : secondaryTextColor)
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .background(
           Capsule()
-            .fill(isSelected ? Color.white : Color.white.opacity(0.1))
+            .fill(
+              isSelected ? themeManager.primaryTextColor.opacity(0.14)
+                : themeManager.translucentOverlay)
         )
     }
   }
@@ -220,23 +236,27 @@ struct FilterChip: View {
 struct FilterSheet: View {
   @ObservedObject var viewModel: ActivityViewModel
   @Environment(\.dismiss) var dismiss
+  @EnvironmentObject var themeManager: ThemeManager
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
 
   var body: some View {
     ZStack {
-      Color.black.ignoresSafeArea()
+      themeManager.backgroundColor.ignoresSafeArea()
 
       VStack(alignment: .leading, spacing: 24) {
         Text("Filters")
           .font(.title2)
           .fontWeight(.bold)
-          .foregroundColor(.white)
+          .foregroundColor(textColor)
           .padding(.top)
 
         // Type Filter
         VStack(alignment: .leading, spacing: 12) {
           Text("Type")
             .font(.headline)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(secondaryTextColor)
 
           FlowLayout(spacing: 10) {
             ForEach(viewModel.availableFilters) { filter in
@@ -253,7 +273,7 @@ struct FilterSheet: View {
         VStack(alignment: .leading, spacing: 12) {
           Text("Time")
             .font(.headline)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(secondaryTextColor)
 
           FlowLayout(spacing: 10) {
             ForEach(ActivityViewModel.DateFilter.allCases) { filter in
@@ -271,10 +291,10 @@ struct FilterSheet: View {
         Button(action: { dismiss() }) {
           Text("Apply")
             .font(.headline)
-            .foregroundColor(.black)
+            .foregroundColor(textColor)
             .frame(maxWidth: .infinity)
             .padding()
-            .background(Color.white)
+            .background(cardBackground)
             .cornerRadius(12)
         }
       }

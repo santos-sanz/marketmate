@@ -6,6 +6,12 @@ struct CostsView: View {
   @StateObject private var activityVM = ActivityViewModel()
   @State private var showingAddCost = false
   @State private var expandedActivityId: UUID?
+  @EnvironmentObject var themeManager: ThemeManager
+
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
+  private var strokeColor: Color { themeManager.strokeColor }
 
   var body: some View {
     ZStack {
@@ -19,25 +25,25 @@ struct CostsView: View {
             Image(systemName: "person.crop.circle.fill")
               .resizable()
               .frame(width: 40, height: 40)
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(secondaryTextColor)
           }
 
           // Search Bar
           HStack {
             Image(systemName: "magnifyingglass")
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(secondaryTextColor)
             TextField("", text: .constant(""))
-              .foregroundColor(.white)
-              .accentColor(.white)
+              .foregroundColor(textColor)
+              .accentColor(textColor)
               .placeholder(when: true) {  // Always show placeholder for now as text is constant
-                Text("Search").foregroundColor(.white)
+                Text("Search").foregroundColor(secondaryTextColor)
               }
           }
-          .searchBarStyle()
+          .searchBarStyle(themeManager: themeManager)
 
           Button(action: {}) {
             Image(systemName: "chart.bar.xaxis")
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
               .font(Typography.title3)
           }
         }
@@ -48,7 +54,7 @@ struct CostsView: View {
         // Content
         if costsVM.isLoading {
           ProgressView()
-            .progressViewStyle(CircularProgressViewStyle(tint: .marketBlue))
+            .progressViewStyle(CircularProgressViewStyle(tint: textColor))
         } else {
           ScrollView {
             LazyVStack(spacing: 16) {
@@ -57,7 +63,7 @@ struct CostsView: View {
                 HStack {
                   Text("Recent Activity")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(textColor)
                   Spacer()
                   NavigationLink(
                     destination: ActivityHistoryView(initialFilter: .costs).environmentObject(
@@ -65,7 +71,7 @@ struct CostsView: View {
                   ) {
                     Text("Show all")
                       .font(.subheadline)
-                      .foregroundColor(.marketBlue)
+                      .foregroundColor(textColor)
                   }
                 }
 
@@ -112,11 +118,11 @@ struct CostsView: View {
             Button(action: { showingAddCost = true }) {
               Image(systemName: "plus")
                 .font(.title)
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
                 .frame(width: 60, height: 60)
-                .background(Color.marketBlue)
+                .background(cardBackground)
                 .clipShape(Circle())
-                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 4)
+                .shadow(color: strokeColor, radius: 4, x: 0, y: 4)
             }
             .padding()
           }
@@ -143,6 +149,10 @@ struct CostRowView: View {
   let cost: Cost
   @EnvironmentObject var profileVM: ProfileViewModel
   @EnvironmentObject var costsVM: CostsViewModel
+  @EnvironmentObject var themeManager: ThemeManager
+
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
 
   var categoryName: String? {
     guard let categoryId = cost.categoryId else { return nil }
@@ -152,7 +162,7 @@ struct CostRowView: View {
   var body: some View {
     HStack {
       Circle()
-        .fill(Color.marketRed.opacity(0.2))
+        .fill(themeManager.translucentOverlay)
         .frame(width: 40, height: 40)
         .overlay(
           Image(systemName: "arrow.down.circle.fill")
@@ -162,7 +172,7 @@ struct CostRowView: View {
       VStack(alignment: .leading, spacing: 4) {
         Text(cost.description)
           .font(.headline)
-          .foregroundColor(.white)
+          .foregroundColor(textColor)
       }
 
       Spacer()
@@ -175,11 +185,11 @@ struct CostRowView: View {
         if let categoryName = categoryName {
           Text(categoryName)
             .font(.caption)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(secondaryTextColor)
         }
       }
     }
     .padding()
-    .marketCardStyle()
+    .marketCardStyle(themeManager: themeManager)
   }
 }

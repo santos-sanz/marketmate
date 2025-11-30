@@ -4,6 +4,7 @@ struct ExpandedActivityView: View {
   let activity: Activity
   @ObservedObject var viewModel: ActivityViewModel
   var onEdit: (ActivityHistoryView.SheetType) -> Void
+  @EnvironmentObject var themeManager: ThemeManager
 
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
@@ -12,21 +13,21 @@ struct ExpandedActivityView: View {
         VStack(alignment: .leading, spacing: 4) {
           Text("Date")
             .font(.caption)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(themeManager.secondaryTextColor)
           Text(activity.createdAt.formatted(date: .long, time: .standard))
             .font(.subheadline)
-            .foregroundColor(.white)
+            .foregroundColor(themeManager.primaryTextColor)
         }
         Spacer()
       }
 
       if viewModel.isLoadingDetails {
         ProgressView()
-          .tint(.white)
+          .tint(themeManager.primaryTextColor)
           .frame(maxWidth: .infinity, alignment: .center)
           .padding(.vertical)
       } else if let details = viewModel.expandedDetails {
-        Divider().background(Color.white.opacity(0.1))
+        Divider().background(themeManager.strokeColor)
 
         switch details {
         case .sale(let sale):
@@ -41,15 +42,15 @@ struct ExpandedActivityView: View {
       } else {
         // Fallback for simple activities or if fetch failed/not needed
         if let amount = activity.amount {
-          Divider().background(Color.white.opacity(0.1))
+          Divider().background(themeManager.strokeColor)
           HStack {
             VStack(alignment: .leading, spacing: 4) {
               Text("Amount")
                 .font(.caption)
-                .foregroundColor(.marketTextSecondary)
+                .foregroundColor(themeManager.secondaryTextColor)
               Text(String(format: "%.2f", amount))
                 .font(.subheadline)
-                .foregroundColor(.white)
+                .foregroundColor(themeManager.primaryTextColor)
             }
             Spacer()
           }
@@ -57,7 +58,7 @@ struct ExpandedActivityView: View {
       }
     }
     .padding()
-    .background(Color.white.opacity(0.05))
+    .background(themeManager.cardBackground)
     .overlay(alignment: .topTrailing) {
       if let details = viewModel.expandedDetails {
         Button(action: {
@@ -74,7 +75,7 @@ struct ExpandedActivityView: View {
         }) {
           Image(systemName: "pencil.circle.fill")
             .font(.title2)
-            .foregroundColor(.marketBlue)
+            .foregroundColor(themeManager.primaryTextColor)
             .padding(8)
         }
       }
@@ -84,6 +85,7 @@ struct ExpandedActivityView: View {
 
 struct SaleDetailsView: View {
   let sale: Sale
+  @EnvironmentObject var themeManager: ThemeManager
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -93,14 +95,14 @@ struct SaleDetailsView: View {
           VStack(alignment: .leading, spacing: 4) {
             Text("Market")
               .font(.caption)
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(themeManager.secondaryTextColor)
             Text(location)
               .font(.subheadline)
-              .foregroundColor(.white)
+              .foregroundColor(themeManager.primaryTextColor)
           }
           Spacer()
         }
-        Divider().background(Color.white.opacity(0.1))
+        Divider().background(themeManager.strokeColor)
       }
 
       // Payment Method
@@ -108,43 +110,43 @@ struct SaleDetailsView: View {
         VStack(alignment: .leading, spacing: 4) {
           Text("Payment Method")
             .font(.caption)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(themeManager.secondaryTextColor)
           Text(sale.paymentMethod)
             .font(.subheadline)
-            .foregroundColor(.white)
+            .foregroundColor(themeManager.primaryTextColor)
         }
         Spacer()
       }
 
-      Divider().background(Color.white.opacity(0.1))
+      Divider().background(themeManager.strokeColor)
 
       // Items
       if let items = sale.items, !items.isEmpty {
         VStack(alignment: .leading, spacing: 8) {
           Text("Items")
             .font(.caption)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(themeManager.secondaryTextColor)
 
           ForEach(items) { item in
             HStack {
               Text("\(item.quantity)x \(item.productName)")
                 .font(.subheadline)
-                .foregroundColor(.white)
+                .foregroundColor(themeManager.primaryTextColor)
               Spacer()
               Text(String(format: "%.2f", item.priceAtSale * Double(item.quantity)))
                 .font(.subheadline)
-                .foregroundColor(.white)
+                .foregroundColor(themeManager.primaryTextColor)
             }
           }
         }
-        Divider().background(Color.white.opacity(0.1))
+        Divider().background(themeManager.strokeColor)
       }
 
       // Total
       HStack {
         Text("Total")
           .font(.headline)
-          .foregroundColor(.white)
+          .foregroundColor(themeManager.primaryTextColor)
         Spacer()
         Text(String(format: "%.2f", sale.totalAmount))
           .font(.headline)
@@ -157,6 +159,7 @@ struct SaleDetailsView: View {
 struct CostDetailsView: View {
   let cost: Cost
   @EnvironmentObject var costsVM: CostsViewModel
+  @EnvironmentObject var themeManager: ThemeManager
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -167,34 +170,34 @@ struct CostDetailsView: View {
           VStack(alignment: .leading, spacing: 4) {
             Text("Category")
               .font(.caption)
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(themeManager.secondaryTextColor)
             Text(categoryName)
               .font(.subheadline)
-              .foregroundColor(.white)
+              .foregroundColor(themeManager.primaryTextColor)
           }
           Spacer()
         }
-        Divider().background(Color.white.opacity(0.1))
+        Divider().background(themeManager.strokeColor)
       }
 
       HStack {
         VStack(alignment: .leading, spacing: 4) {
           Text("Description")
             .font(.caption)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(themeManager.secondaryTextColor)
           Text(cost.description)
             .font(.subheadline)
-            .foregroundColor(.white)
+            .foregroundColor(themeManager.primaryTextColor)
         }
         Spacer()
       }
 
-      Divider().background(Color.white.opacity(0.1))
+      Divider().background(themeManager.strokeColor)
 
       HStack {
         Text("Amount")
           .font(.headline)
-          .foregroundColor(.white)
+          .foregroundColor(themeManager.primaryTextColor)
         Spacer()
         Text(String(format: "%.2f", cost.amount))
           .font(.headline)
@@ -207,6 +210,7 @@ struct CostDetailsView: View {
 struct ProductDetailsView: View {
   let product: Product
   @EnvironmentObject var inventoryVM: InventoryViewModel
+  @EnvironmentObject var themeManager: ThemeManager
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -214,39 +218,39 @@ struct ProductDetailsView: View {
         VStack(alignment: .leading, spacing: 4) {
           Text("Product Name")
             .font(.caption)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(themeManager.secondaryTextColor)
           Text(product.name)
             .font(.subheadline)
-            .foregroundColor(.white)
+            .foregroundColor(themeManager.primaryTextColor)
         }
         Spacer()
       }
 
-      Divider().background(Color.white.opacity(0.1))
+      Divider().background(themeManager.strokeColor)
 
       if let description = product.description, !description.isEmpty {
         HStack {
           VStack(alignment: .leading, spacing: 4) {
             Text("Description")
               .font(.caption)
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(themeManager.secondaryTextColor)
             Text(description)
               .font(.subheadline)
-              .foregroundColor(.white)
+              .foregroundColor(themeManager.primaryTextColor)
           }
           Spacer()
         }
-        Divider().background(Color.white.opacity(0.1))
+        Divider().background(themeManager.strokeColor)
       }
 
       HStack {
         VStack(alignment: .leading, spacing: 4) {
           Text("Price")
             .font(.caption)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(themeManager.secondaryTextColor)
           Text(String(format: "%.2f", product.price))
             .font(.subheadline)
-            .foregroundColor(.white)
+            .foregroundColor(themeManager.primaryTextColor)
         }
         Spacer()
 
@@ -254,24 +258,24 @@ struct ProductDetailsView: View {
           VStack(alignment: .trailing, spacing: 4) {
             Text("Cost")
               .font(.caption)
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(themeManager.secondaryTextColor)
             Text(String(format: "%.2f", cost))
               .font(.subheadline)
-              .foregroundColor(.white)
+              .foregroundColor(themeManager.primaryTextColor)
           }
         }
       }
 
       if let stock = product.stockQuantity {
-        Divider().background(Color.white.opacity(0.1))
+        Divider().background(themeManager.strokeColor)
         HStack {
           VStack(alignment: .leading, spacing: 4) {
             Text("Stock Quantity")
               .font(.caption)
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(themeManager.secondaryTextColor)
             Text("\(stock)")
               .font(.subheadline)
-              .foregroundColor(.white)
+              .foregroundColor(themeManager.primaryTextColor)
           }
           Spacer()
         }
@@ -280,15 +284,15 @@ struct ProductDetailsView: View {
       if let categoryId = product.categoryId,
         let categoryName = inventoryVM.categories.first(where: { $0.id == categoryId })?.name
       {
-        Divider().background(Color.white.opacity(0.1))
+        Divider().background(themeManager.strokeColor)
         HStack {
           VStack(alignment: .leading, spacing: 4) {
             Text("Category")
               .font(.caption)
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(themeManager.secondaryTextColor)
             Text(categoryName)
               .font(.subheadline)
-              .foregroundColor(.white)
+              .foregroundColor(themeManager.primaryTextColor)
           }
           Spacer()
         }
@@ -299,6 +303,7 @@ struct ProductDetailsView: View {
 
 struct MarketDetailsView: View {
   let market: Market
+  @EnvironmentObject var themeManager: ThemeManager
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -306,46 +311,46 @@ struct MarketDetailsView: View {
         VStack(alignment: .leading, spacing: 4) {
           Text("Market Name")
             .font(.caption)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(themeManager.secondaryTextColor)
           Text(market.name)
             .font(.subheadline)
-            .foregroundColor(.white)
+            .foregroundColor(themeManager.primaryTextColor)
         }
         Spacer()
       }
 
       if let location = market.location {
-        Divider().background(Color.white.opacity(0.1))
+        Divider().background(themeManager.strokeColor)
         HStack {
           VStack(alignment: .leading, spacing: 4) {
             Text("Location")
               .font(.caption)
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(themeManager.secondaryTextColor)
             Text(location)
               .font(.subheadline)
-              .foregroundColor(.white)
+              .foregroundColor(themeManager.primaryTextColor)
           }
           Spacer()
         }
       }
 
-      Divider().background(Color.white.opacity(0.1))
+      Divider().background(themeManager.strokeColor)
 
       HStack {
         VStack(alignment: .leading, spacing: 4) {
           Text("Date")
             .font(.caption)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(themeManager.secondaryTextColor)
           Text(market.date.formatted(date: .long, time: .omitted))
             .font(.subheadline)
-            .foregroundColor(.white)
+            .foregroundColor(themeManager.primaryTextColor)
         }
         Spacer()
 
         VStack(alignment: .trailing, spacing: 4) {
           Text("Status")
             .font(.caption)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(themeManager.secondaryTextColor)
           Text(market.isOpen ? "Open" : "Closed")
             .font(.subheadline)
             .foregroundColor(market.isOpen ? .marketGreen : .red)
@@ -353,7 +358,7 @@ struct MarketDetailsView: View {
           if !market.isOpen, let endTime = market.endTime {
             Text(endTime.formatted(date: .omitted, time: .shortened))
               .font(.caption2)
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(themeManager.secondaryTextColor)
           }
         }
       }

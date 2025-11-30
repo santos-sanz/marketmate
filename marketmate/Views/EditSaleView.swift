@@ -4,6 +4,7 @@ struct EditSaleView: View {
   @Environment(\.dismiss) var dismiss
   @EnvironmentObject var salesVM: SalesViewModel
   @EnvironmentObject var inventoryVM: InventoryViewModel
+  @EnvironmentObject var themeManager: ThemeManager
 
   let sale: Sale
 
@@ -12,6 +13,9 @@ struct EditSaleView: View {
   @State private var items: [SaleItem]
 
   let paymentMethods = ["Cash", "Card", "Transfer", "Other"]
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
 
   init(sale: Sale) {
     self.sale = sale
@@ -32,15 +36,15 @@ struct EditSaleView: View {
 
         Form {
           // Items Section
-          Section(header: Text("Items").foregroundColor(.marketTextSecondary)) {
+          Section(header: Text("Items").foregroundColor(secondaryTextColor)) {
             ForEach($items) { $item in
               HStack {
                 VStack(alignment: .leading, spacing: 4) {
                   Text(item.productName)
-                    .foregroundColor(.white)
+                    .foregroundColor(textColor)
                     .font(.body)
                   Text("$\(String(format: "%.2f", item.priceAtSale)) each")
-                    .foregroundColor(.marketTextSecondary)
+                    .foregroundColor(secondaryTextColor)
                     .font(.caption)
                 }
 
@@ -54,12 +58,12 @@ struct EditSaleView: View {
                     }
                   }) {
                     Image(systemName: "minus.circle.fill")
-                      .foregroundColor(.white.opacity(0.7))
+                      .foregroundColor(secondaryTextColor)
                       .font(.title3)
                   }
 
                   Text("\(item.quantity)")
-                    .foregroundColor(.white)
+                    .foregroundColor(textColor)
                     .font(.headline)
                     .frame(minWidth: 30)
 
@@ -67,7 +71,7 @@ struct EditSaleView: View {
                     item.quantity += 1
                   }) {
                     Image(systemName: "plus.circle.fill")
-                      .foregroundColor(.white.opacity(0.7))
+                      .foregroundColor(secondaryTextColor)
                       .font(.title3)
                   }
                 }
@@ -76,42 +80,42 @@ struct EditSaleView: View {
             }
             .onDelete(perform: deleteItems)
           }
-          .listRowBackground(Color.marketCard)
+          .listRowBackground(cardBackground)
 
           // Total Section
-          Section(header: Text("Total").foregroundColor(.marketTextSecondary)) {
+          Section(header: Text("Total").foregroundColor(secondaryTextColor)) {
             HStack {
               Text("Total Amount")
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
               Spacer()
               Text("$\(String(format: "%.2f", totalAmount))")
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
                 .font(.headline)
             }
           }
-          .listRowBackground(Color.marketCard)
+          .listRowBackground(cardBackground)
 
           // Payment Section
-          Section(header: Text("Payment").foregroundColor(.marketTextSecondary)) {
+          Section(header: Text("Payment").foregroundColor(secondaryTextColor)) {
             Picker("Payment Method", selection: $paymentMethod) {
               ForEach(paymentMethods, id: \.self) { method in
                 Text(method).tag(method)
               }
             }
             .pickerStyle(.menu)
-            .accentColor(.white)
+            .accentColor(textColor)
           }
-          .listRowBackground(Color.marketCard)
+          .listRowBackground(cardBackground)
 
           // Notes Section
-          Section(header: Text("Notes").foregroundColor(.marketTextSecondary)) {
+          Section(header: Text("Notes").foregroundColor(secondaryTextColor)) {
             TextField("", text: $notes)
               .placeholder(when: notes.isEmpty) {
-                Text("Notes").foregroundColor(Color.white.opacity(0.6))
+                Text("Notes").foregroundColor(secondaryTextColor)
               }
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
           }
-          .listRowBackground(Color.marketCard)
+          .listRowBackground(cardBackground)
         }
         .scrollContentBackground(.hidden)
       }
@@ -121,7 +125,7 @@ struct EditSaleView: View {
           Button("Save") {
             saveSale()
           }
-          .foregroundColor(.white)
+          .foregroundColor(textColor)
           .disabled(items.isEmpty)
         }
 
@@ -129,7 +133,7 @@ struct EditSaleView: View {
           Button("Cancel") {
             dismiss()
           }
-          .foregroundColor(.marketTextSecondary)
+          .foregroundColor(secondaryTextColor)
         }
       }
     }

@@ -5,6 +5,7 @@ struct CategoryPicker: View {
   let categories: [Category]
   let onAddCategory: (String) -> Void
   let title: String
+  @EnvironmentObject var themeManager: ThemeManager
 
   @State private var isAddingNew = false
   @State private var newCategoryName = ""
@@ -17,7 +18,7 @@ struct CategoryPicker: View {
     VStack(spacing: 12) {
       HStack {
         Text(title)
-          .foregroundColor(.marketTextSecondary)
+          .foregroundColor(themeManager.secondaryTextColor)
         Spacer()
         
         if isAddingNew {
@@ -48,10 +49,10 @@ struct CategoryPicker: View {
             } label: {
               HStack {
                 Text(selectedCategoryName.isEmpty ? "Select" : selectedCategoryName)
-                  .foregroundColor(.white)
+                  .foregroundColor(themeManager.primaryTextColor)
                 Image(systemName: "plus")
                   .font(.caption)
-                  .foregroundColor(.marketTextSecondary)
+                  .foregroundColor(themeManager.secondaryTextColor)
               }
             }
         }
@@ -70,11 +71,11 @@ struct CategoryPicker: View {
           
           TextField("", text: $newCategoryName)
             .placeholder(when: newCategoryName.isEmpty) {
-              Text("New Category Name").foregroundColor(Color.white.opacity(0.6))
+              Text("New Category Name").foregroundColor(themeManager.secondaryTextColor)
             }
-            .foregroundColor(.white)
+            .foregroundColor(themeManager.primaryTextColor)
             .padding(8)
-            .background(Color.white.opacity(0.1))
+            .background(themeManager.fieldBackground)
             .cornerRadius(8)
             .submitLabel(.done)
             .onSubmit {

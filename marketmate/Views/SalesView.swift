@@ -8,6 +8,7 @@ struct SalesView: View {
   @StateObject private var marketSession = MarketSessionManager()
   @StateObject private var locationManager = LocationManager()
   @EnvironmentObject var profileVM: ProfileViewModel
+  @EnvironmentObject var themeManager: ThemeManager
 
   @State private var showingCheckout = false
   @State private var showingStartMarket = false
@@ -39,6 +40,12 @@ struct SalesView: View {
     guard let value = customAmountValue else { return false }
     return value > 0
   }
+
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
+  private var fieldBackground: Color { themeManager.fieldBackground }
+  private var strokeColor: Color { themeManager.strokeColor }
 
   var body: some View {
     ZStack {
@@ -126,29 +133,29 @@ struct SalesView: View {
         Image(systemName: "person.crop.circle.fill")
           .resizable()
           .frame(width: 40, height: 40)
-          .foregroundColor(.marketTextSecondary)
+          .foregroundColor(secondaryTextColor)
       }
 
       if profileVM.useInventory {
         HStack {
           Image(systemName: "magnifyingglass")
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(secondaryTextColor)
           TextField("Search", text: $searchText)
-            .foregroundColor(.white)
-            .accentColor(.white)
+            .foregroundColor(textColor)
+            .accentColor(textColor)
             .placeholder(when: searchText.isEmpty) {
-              Text("Search").foregroundColor(.white)
+              Text("Search").foregroundColor(secondaryTextColor)
             }
         }
-        .searchBarStyle()
+        .searchBarStyle(themeManager: themeManager)
       } else {
         VStack(alignment: .leading, spacing: 2) {
           Text("Custom Sales")
             .font(Typography.subheadline)
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
           Text("Inventory features hidden")
             .font(Typography.caption1)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(secondaryTextColor)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
       }
@@ -159,7 +166,7 @@ struct SalesView: View {
         showingStartMarket = true
       }) {
         Image(systemName: "tent.fill")
-          .foregroundColor(.white)
+          .foregroundColor(textColor)
           .font(Typography.title2)
       }
     }
@@ -171,10 +178,10 @@ struct SalesView: View {
   private func marketBanner(for market: Market) -> some View {
     HStack {
       Image(systemName: "tent.fill")
-        .foregroundColor(.white)
+        .foregroundColor(textColor)
       Text("Open Market: \(market.location ?? "Unknown")")
         .font(.headline)
-        .foregroundColor(.white)
+        .foregroundColor(textColor)
       Spacer()
       Button(action: { Task { await marketSession.endMarket() } }) {
         Text("End")
@@ -182,13 +189,17 @@ struct SalesView: View {
           .bold()
           .padding(.horizontal, 12)
           .padding(.vertical, 6)
-          .background(Color.white.opacity(0.2))
-          .foregroundColor(.white)
+          .background(themeManager.translucentOverlay)
+          .foregroundColor(textColor)
           .cornerRadius(12)
       }
     }
     .padding()
-    .background(Color.marketBlue.opacity(0.8))
+    .background(cardBackground)
+    .overlay(
+      RoundedRectangle(cornerRadius: 12)
+        .stroke(strokeColor, lineWidth: 1)
+    )
     .cornerRadius(12)
     .padding(.horizontal)
   }
@@ -206,13 +217,13 @@ struct SalesView: View {
               VStack(spacing: 4) {
                 Image(systemName: "keyboard")
                   .font(.title2)
-                  .foregroundColor(.white)
+                  .foregroundColor(textColor)
                 Text("Custom")
                   .font(Typography.caption1)
-                  .foregroundColor(.white)
+                  .foregroundColor(textColor)
               }
               .frame(maxWidth: .infinity, maxHeight: .infinity)
-              .background(Color.marketBlue.opacity(0.6))
+              .background(fieldBackground)
               .cornerRadius(CornerRadius.sm)
             }
           )
@@ -244,10 +255,10 @@ struct SalesView: View {
             Image(systemName: "arrow.right")
               .font(.caption)
           }
-          .foregroundColor(.white)
+          .foregroundColor(textColor)
           .padding(.vertical, 12)
           .frame(maxWidth: .infinity)
-          .background(Color.white.opacity(0.1))
+          .background(themeManager.translucentOverlay)
           .cornerRadius(CornerRadius.sm)
         }
       }
@@ -261,45 +272,45 @@ struct SalesView: View {
         VStack(alignment: .leading, spacing: 4) {
           Text("Charge custom amount")
             .font(Typography.headline)
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
           Text("Build a sale without inventory items.")
             .font(Typography.caption1)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(secondaryTextColor)
         }
         Spacer()
         Text("Inventory off")
           .font(Typography.caption1)
-          .foregroundColor(.marketBlue)
+          .foregroundColor(textColor)
           .padding(.horizontal, 12)
           .padding(.vertical, 6)
-          .background(Color.marketBlue.opacity(0.15))
+          .background(themeManager.translucentOverlay)
           .cornerRadius(20)
       }
 
       VStack(alignment: .leading, spacing: 12) {
         Text("Amount")
           .font(Typography.caption1)
-          .foregroundColor(.marketTextSecondary)
+          .foregroundColor(secondaryTextColor)
 
         HStack(spacing: 12) {
           Text(profileVM.currencySymbol)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(secondaryTextColor)
             .font(.title2)
           TextField("0.00", text: $customAmount)
             .currencyInput(text: $customAmount)
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
             .font(.system(size: 34, weight: .bold))
             .keyboardType(.decimalPad)
         }
         .padding()
-        .background(Color.marketCard)
+        .background(fieldBackground)
         .cornerRadius(CornerRadius.sm)
       }
 
       HStack {
         Text("Quantity")
           .font(Typography.caption1)
-          .foregroundColor(.marketTextSecondary)
+          .foregroundColor(secondaryTextColor)
 
         Spacer()
 
@@ -308,20 +319,20 @@ struct SalesView: View {
             if customQuantity > 1 { customQuantity -= 1 }
           }) {
             Image(systemName: "minus.circle.fill")
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(secondaryTextColor)
               .font(.title3)
           }
 
           Text("\(customQuantity)")
             .font(Typography.body.weight(.semibold))
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
             .frame(minWidth: 20)
 
           Button(action: {
             customQuantity += 1
           }) {
             Image(systemName: "plus.circle.fill")
-              .foregroundColor(.marketBlue)
+              .foregroundColor(textColor)
               .font(.title3)
           }
         }
@@ -330,12 +341,12 @@ struct SalesView: View {
       VStack(alignment: .leading, spacing: 8) {
         Text("Label")
           .font(Typography.caption1)
-          .foregroundColor(.marketTextSecondary)
+          .foregroundColor(secondaryTextColor)
 
         TextField("e.g. Custom service, donation, tip", text: $customDescription)
-          .foregroundColor(.white)
+          .foregroundColor(textColor)
           .padding()
-          .background(Color.marketCard)
+          .background(fieldBackground)
           .cornerRadius(CornerRadius.sm)
       }
 
@@ -346,20 +357,23 @@ struct SalesView: View {
             .fontWeight(.semibold)
         }
         .font(Typography.body)
-        .foregroundColor(.white)
+        .foregroundColor(textColor)
         .frame(maxWidth: .infinity)
         .padding()
-        .background(canAddCustomAmount ? Color.marketBlue : Color.marketBlue.opacity(0.4))
+        .background(
+          (canAddCustomAmount ? themeManager.primaryTextColor.opacity(0.16)
+            : themeManager.primaryTextColor.opacity(0.08))
+        )
         .cornerRadius(CornerRadius.sm)
       }
       .disabled(!canAddCustomAmount)
     }
     .padding()
-    .background(Color.marketCard)
+    .background(cardBackground)
     .cornerRadius(CornerRadius.md)
     .overlay(
       RoundedRectangle(cornerRadius: CornerRadius.md)
-        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        .stroke(strokeColor, lineWidth: 1)
     )
     .padding(.horizontal, Spacing.sm)
   }
@@ -370,16 +384,16 @@ struct SalesView: View {
         VStack(alignment: .leading, spacing: 4) {
           Text("Current cart")
             .font(Typography.headline)
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
           Text("Adjust quantities or remove lines.")
             .font(Typography.caption1)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(secondaryTextColor)
         }
         Spacer()
         Button(action: { salesVM.clearCart() }) {
           Text("Clear")
             .font(Typography.caption1)
-            .foregroundColor(.marketBlue)
+            .foregroundColor(secondaryTextColor)
         }
       }
 
@@ -388,10 +402,10 @@ struct SalesView: View {
           VStack(alignment: .leading, spacing: 4) {
             Text(item.name)
               .font(Typography.subheadline)
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
             Text("\(profileVM.currencySymbol) \(String(format: "%.2f", item.price)) each")
               .font(Typography.caption1)
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(secondaryTextColor)
           }
 
           Spacer()
@@ -399,20 +413,20 @@ struct SalesView: View {
           HStack(spacing: 8) {
             Button(action: { salesVM.removeFromCart(item: item) }) {
               Image(systemName: "minus.circle.fill")
-                .foregroundColor(.marketTextSecondary)
+                .foregroundColor(secondaryTextColor)
             }
             Text("x\(item.quantity)")
               .font(Typography.body)
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
               .frame(minWidth: 32)
             Button(action: { salesVM.increaseQuantity(for: item) }) {
               Image(systemName: "plus.circle.fill")
-                .foregroundColor(.marketBlue)
+                .foregroundColor(textColor)
             }
           }
         }
         .padding()
-        .background(Color.marketCard)
+        .background(cardBackground)
         .cornerRadius(CornerRadius.sm)
       }
     }
@@ -424,14 +438,14 @@ struct SalesView: View {
       HStack {
         Text("Recent Activity")
           .font(Typography.headline)
-          .foregroundColor(.white)
+          .foregroundColor(textColor)
         Spacer()
         NavigationLink(
           destination: ActivityHistoryView(initialFilter: .sales).environmentObject(profileVM)
         ) {
           Text("Show all")
             .font(.subheadline)
-            .foregroundColor(.marketBlue)
+            .foregroundColor(textColor)
         }
       }
       .padding(.horizontal, Spacing.sm)
@@ -454,17 +468,17 @@ struct SalesView: View {
           Text("\(salesVM.cartItems.reduce(0) { $0 + $1.quantity }) items")
             .font(.caption)
             .fontWeight(.medium)
-            .foregroundColor(.white.opacity(0.8))
+            .foregroundColor(textColor.opacity(0.8))
 
           HStack(alignment: .firstTextBaseline, spacing: 4) {
             Text("Total")
               .font(.subheadline)
-              .foregroundColor(.white.opacity(0.8))
+              .foregroundColor(textColor.opacity(0.8))
 
             Text("\(profileVM.currencySymbol) \(String(format: "%.2f", salesVM.cartTotal))")
               .font(.title2)
               .fontWeight(.bold)
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
           }
         }
 
@@ -478,10 +492,10 @@ struct SalesView: View {
             Image(systemName: "arrow.right")
               .font(.headline)
           }
-          .foregroundColor(.marketBlue)
+          .foregroundColor(textColor)
           .padding(.vertical, 12)
           .padding(.horizontal, 20)
-          .background(Color.white)
+          .background(cardBackground)
           .cornerRadius(30)
         }
       }
@@ -491,50 +505,50 @@ struct SalesView: View {
     }
     .background(
       Rectangle()
-        .fill(.ultraThinMaterial)
-        .overlay(Color.black.opacity(0.2))
+        .fill(themeManager.elevatedCardBackground)
+        .overlay(themeManager.translucentOverlay)
     )
     .cornerRadius(24, corners: [.topLeft, .topRight])
-    .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: -5)
+    .shadow(color: strokeColor, radius: 10, x: 0, y: -5)
   }
 
   private var customAmountSheet: some View {
     ScrollView {
       VStack(spacing: 20) {
         Capsule()
-          .fill(Color.white.opacity(0.3))
+          .fill(themeManager.translucentOverlay)
           .frame(width: 40, height: 5)
           .padding(.top, 8)
 
         VStack(alignment: .leading, spacing: 16) {
           Text("Add custom line item")
             .font(Typography.title3)
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
             .bold()
 
           VStack(alignment: .leading, spacing: 10) {
             Text("Amount")
               .font(Typography.caption1)
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(secondaryTextColor)
 
             HStack(spacing: 12) {
               Text(profileVM.currencySymbol)
-                .foregroundColor(.marketTextSecondary)
+                .foregroundColor(secondaryTextColor)
                 .font(.title2)
               TextField("0.00", text: $customAmount)
                 .currencyInput(text: $customAmount)
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
                 .font(.system(size: 32, weight: .bold))
             }
             .padding()
-            .background(Color.white.opacity(0.08))
+            .background(fieldBackground)
             .cornerRadius(CornerRadius.sm)
           }
 
           VStack(alignment: .leading, spacing: 8) {
             Text("Quick adds")
               .font(Typography.caption1)
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(secondaryTextColor)
 
             HStack {
               ForEach(quickAmounts, id: \.self) { amount in
@@ -544,10 +558,10 @@ struct SalesView: View {
                 }) {
                   Text("+\(String(format: "%.0f", amount))")
                     .font(Typography.body)
-                    .foregroundColor(.white)
+                    .foregroundColor(textColor)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
-                    .background(Color.white.opacity(0.1))
+                    .background(themeManager.translucentOverlay)
                     .cornerRadius(12)
                 }
               }
@@ -557,30 +571,30 @@ struct SalesView: View {
           VStack(alignment: .leading, spacing: 8) {
             Text("Quantity")
               .font(Typography.caption1)
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(secondaryTextColor)
             Stepper(value: $customQuantity, in: 1...50) {
               Text("\(customQuantity) item\(customQuantity == 1 ? "" : "s")")
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
             }
             .padding()
-            .background(Color.white.opacity(0.08))
+            .background(fieldBackground)
             .cornerRadius(CornerRadius.sm)
           }
 
           VStack(alignment: .leading, spacing: 8) {
             Text("Label")
               .font(Typography.caption1)
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(secondaryTextColor)
 
             TextField("Give this line a name", text: $customDescription)
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
               .padding()
-              .background(Color.white.opacity(0.08))
+              .background(fieldBackground)
               .cornerRadius(CornerRadius.sm)
           }
         }
         .padding()
-        .background(Color.white.opacity(0.05))
+        .background(cardBackground)
         .cornerRadius(CornerRadius.md)
 
         HStack(spacing: 12) {
@@ -590,10 +604,10 @@ struct SalesView: View {
           }) {
             Text("Cancel")
               .font(Typography.body)
-              .foregroundColor(.marketTextSecondary)
+              .foregroundColor(secondaryTextColor)
               .frame(maxWidth: .infinity)
               .padding()
-              .background(Color.white.opacity(0.08))
+              .background(fieldBackground)
               .cornerRadius(CornerRadius.sm)
           }
 
@@ -601,10 +615,14 @@ struct SalesView: View {
             Text("Add to cart")
               .font(Typography.body)
               .bold()
-              .foregroundColor(.black)
+              .foregroundColor(textColor)
               .frame(maxWidth: .infinity)
               .padding()
-              .background(canAddCustomAmount ? Color.marketBlue : Color.marketBlue.opacity(0.4))
+              .background(
+                canAddCustomAmount
+                  ? themeManager.primaryTextColor.opacity(0.16)
+                  : themeManager.primaryTextColor.opacity(0.08)
+              )
               .cornerRadius(CornerRadius.sm)
           }
           .disabled(!canAddCustomAmount)
@@ -612,7 +630,7 @@ struct SalesView: View {
       }
       .padding(24)
     }
-    .background(Color.marketBlue.edgesIgnoringSafeArea(.all))
+    .background(themeManager.backgroundColor.edgesIgnoringSafeArea(.all))
     .presentationDetents([.medium, .large])
   }
 
@@ -650,13 +668,14 @@ struct ProductCard: View {
   let product: Product
   let action: () -> Void
   @EnvironmentObject var profileVM: ProfileViewModel
+  @EnvironmentObject var themeManager: ThemeManager
 
   var body: some View {
     Button(action: action) {
       VStack(alignment: .leading, spacing: 0) {
         Text(product.name)
           .font(Typography.subheadline)
-          .foregroundColor(.white)
+          .foregroundColor(themeManager.primaryTextColor)
           .lineLimit(2)
           .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -665,12 +684,12 @@ struct ProductCard: View {
         Text("\(profileVM.currencySymbol) \(String(format: "%.2f", product.price))")
           .font(Typography.headline)
           .fontWeight(.bold)
-          .foregroundColor(.white)
+          .foregroundColor(themeManager.primaryTextColor)
       }
 
       .padding(Spacing.sm)
       .frame(maxWidth: .infinity, maxHeight: .infinity)
-      .background(Color.marketCard)
+      .background(themeManager.cardBackground)
       .cornerRadius(CornerRadius.sm)
     }
   }

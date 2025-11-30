@@ -4,12 +4,17 @@ struct AddCostView: View {
   @EnvironmentObject var costsVM: CostsViewModel
   @EnvironmentObject var profileVM: ProfileViewModel
   @Environment(\.presentationMode) var presentationMode
+  @EnvironmentObject var themeManager: ThemeManager
 
   var costToEdit: Cost?
 
   @State private var description = ""
   @State private var amount = ""
   @State private var categoryId: UUID?
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
+  private var fieldBackground: Color { themeManager.fieldBackground }
 
   init(costToEdit: Cost? = nil) {
     self.costToEdit = costToEdit
@@ -24,23 +29,23 @@ struct AddCostView: View {
         .edgesIgnoringSafeArea(.all)
 
       Form {
-        Section(header: Text("Details").foregroundColor(.marketTextSecondary)) {
+        Section(header: Text("Details").foregroundColor(secondaryTextColor)) {
           TextField("", text: $description)
             .placeholder(when: description.isEmpty) {
-              Text("Description").foregroundColor(Color.white.opacity(0.6))
+              Text("Description").foregroundColor(secondaryTextColor)
             }
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
 
           TextField("", text: $amount)
             .placeholder(when: amount.isEmpty) {
-              Text("\(profileVM.currencySymbol) Amount").foregroundColor(Color.white.opacity(0.6))
+              Text("\(profileVM.currencySymbol) Amount").foregroundColor(secondaryTextColor)
             }
-            .foregroundColor(.white)
+            .foregroundColor(textColor)
             .currencyInput(text: $amount)
         }
-        .listRowBackground(Color.marketCard)
+        .listRowBackground(cardBackground)
 
-        Section(header: Text("Category").foregroundColor(.marketTextSecondary)) {
+        Section(header: Text("Category").foregroundColor(secondaryTextColor)) {
           CategoryPicker(
             selectedCategoryId: $categoryId,
             categories: costsVM.categories.map {
@@ -55,7 +60,7 @@ struct AddCostView: View {
             title: "Category"
           )
         }
-        .listRowBackground(Color.marketCard)
+        .listRowBackground(cardBackground)
       }
       .scrollContentBackground(.hidden)
     }
@@ -70,7 +75,7 @@ struct AddCostView: View {
         Button("Save") {
           saveCost()
         }
-        .foregroundColor(.white)
+        .foregroundColor(textColor)
         .disabled(description.isEmpty || amount.isEmpty)
       }
     }

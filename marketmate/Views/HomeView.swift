@@ -5,6 +5,7 @@ struct HomeView: View {
   @EnvironmentObject var costsVM: CostsViewModel
   @EnvironmentObject var profileVM: ProfileViewModel
   @EnvironmentObject var inventoryVM: InventoryViewModel
+  @EnvironmentObject var themeManager: ThemeManager
 
   @State private var showingAddSale = false
   @State private var showingAddCost = false
@@ -20,6 +21,12 @@ struct HomeView: View {
     case monthly = "Monthly"
     case allTime = "All Time"
   }
+
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
+  private var fieldBackground: Color { themeManager.fieldBackground }
+  private var strokeColor: Color { themeManager.strokeColor }
 
   private var filteredSales: [Sale] {
     filterByDate(salesVM.sales, dateKey: \.createdAt)
@@ -73,27 +80,31 @@ struct HomeView: View {
         Image(systemName: "person.crop.circle.fill")
           .resizable()
           .frame(width: 40, height: 40)
-          .foregroundColor(.marketTextSecondary)
+          .foregroundColor(secondaryTextColor)
       }
 
       HStack {
         Image(systemName: "magnifyingglass")
-          .foregroundColor(.marketTextSecondary)
+          .foregroundColor(secondaryTextColor)
         TextField("", text: $searchText)
-          .foregroundColor(.white)
-          .accentColor(.white)
+          .foregroundColor(textColor)
+          .accentColor(textColor)
           .placeholder(when: searchText.isEmpty) {
-            Text("Search").foregroundColor(.marketTextSecondary)
+            Text("Search").foregroundColor(secondaryTextColor)
           }
       }
       .padding(.vertical, 8)
       .padding(.horizontal, 12)
-      .background(Color.marketCard)
+      .background(fieldBackground)
+      .overlay(
+        RoundedRectangle(cornerRadius: CornerRadius.lg)
+          .stroke(strokeColor, lineWidth: 1)
+      )
       .cornerRadius(CornerRadius.lg)
 
       Button(action: { navigateToReports = true }) {
         Image(systemName: "chart.bar.xaxis")
-          .foregroundColor(.white)
+          .foregroundColor(textColor)
           .font(Typography.title3)
       }
     }
@@ -113,16 +124,16 @@ struct HomeView: View {
         HStack(spacing: 4) {
           Text("Total Balance \(selectedInterval.rawValue)")
             .font(Typography.subheadline)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(secondaryTextColor)
           Image(systemName: "chevron.down")
             .font(.caption)
-            .foregroundColor(.marketTextSecondary)
+            .foregroundColor(secondaryTextColor)
         }
       }
 
       Text("\(profileVM.currencySymbol) \(String(format: "%.2f", totalBalance))")
         .font(Typography.display)
-        .foregroundColor(.white)
+        .foregroundColor(textColor)
 
       HStack(spacing: 30) {
         ActionButton(icon: "tag.fill", label: "Add Sale") { showingAddSale = true }
@@ -137,7 +148,7 @@ struct HomeView: View {
     VStack(alignment: .leading) {
       Text("Recent Activity")
         .font(.headline)
-        .foregroundColor(.white)
+        .foregroundColor(textColor)
         .padding(.horizontal)
 
       ScrollView {
@@ -150,7 +161,7 @@ struct HomeView: View {
 
             if activity.id != filteredActivities.prefix(5).last?.id {
               Divider()
-                .background(Color.marketCard)
+                .background(strokeColor)
                 .padding(.leading, 50)
             }
           }
@@ -159,12 +170,12 @@ struct HomeView: View {
             Text("See all")
               .font(.subheadline)
               .fontWeight(.medium)
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
               .frame(maxWidth: .infinity)
               .padding(.vertical, 12)
           }
         }
-        .background(Color.marketCard)
+        .background(cardBackground)
         .cornerRadius(16)
         .padding(.horizontal)
       }
@@ -211,22 +222,23 @@ struct ActionButton: View {
   let icon: String
   let label: String
   let action: () -> Void
+  @EnvironmentObject var themeManager: ThemeManager
 
   var body: some View {
     Button(action: action) {
       VStack(spacing: 8) {
         Circle()
-          .fill(Color.marketCard)
+          .fill(themeManager.cardBackground)
           .frame(width: 50, height: 50)
           .overlay(
             Image(systemName: icon)
               .font(Typography.title3)
-              .foregroundColor(.white)
+              .foregroundColor(themeManager.primaryTextColor)
           )
 
         Text(label)
           .font(.caption)
-          .foregroundColor(.white)
+          .foregroundColor(themeManager.primaryTextColor)
       }
     }
   }

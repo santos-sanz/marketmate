@@ -5,6 +5,7 @@ struct CheckoutView: View {
   @EnvironmentObject var marketSession: MarketSessionManager
   @EnvironmentObject var profileVM: ProfileViewModel
   @Environment(\.dismiss) var dismiss
+  @EnvironmentObject var themeManager: ThemeManager
 
   @State private var paymentMethod = "Cash"
   @State private var cashReceived = ""
@@ -15,6 +16,11 @@ struct CheckoutView: View {
   @State private var discountValue = ""
   @State private var isPercentage = false
   @State private var isDiscountExpanded = false
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
+  private var fieldBackground: Color { themeManager.fieldBackground }
+  private var strokeColor: Color { themeManager.strokeColor }
 
   var discountAmount: Double {
     guard let value = Double(discountValue) else { return 0 }
@@ -38,60 +44,52 @@ struct CheckoutView: View {
 
   var body: some View {
     ZStack {
-      LinearGradient(
-        colors: [
-          Color.marketBlue,
-          Color.marketDarkBlue,
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-      )
-      .ignoresSafeArea()
+      Color.clear.revolutBackground()
 
       VStack {
         List {
-          Section(header: Text("Items").foregroundColor(.white).bold()) {
+          Section(header: Text("Items").foregroundColor(textColor).bold()) {
             ForEach(salesVM.cartItems) { item in
               HStack {
                 Text("\(item.quantity) x \(item.name)")
-                  .foregroundColor(.white)
+                  .foregroundColor(textColor)
                   .fontWeight(.medium)
                 Spacer()
                 Text(
                   "\(profileVM.currencySymbol) \(String(format: "%.2f", item.price * Double(item.quantity)))"
                 )
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
                 .fontWeight(.bold)
               }
-              .listRowBackground(Color.white.opacity(0.2))
+              .listRowBackground(cardBackground)
             }
           }
 
-          Section(header: Text("Payment").foregroundColor(.white).bold()) {
+          Section(header: Text("Payment").foregroundColor(textColor).bold()) {
             Picker("Method", selection: $paymentMethod) {
               ForEach(paymentMethods, id: \.self) { method in
                 Text(method).tag(method)
               }
             }
             .pickerStyle(SegmentedPickerStyle())
-            .listRowBackground(Color.white.opacity(0.2))
+            .listRowBackground(cardBackground)
 
             if paymentMethod == "Cash" {
               HStack {
                 Text("Cash Received")
-                  .foregroundColor(.white)
+                  .foregroundColor(textColor)
                   .fontWeight(.medium)
                 Spacer()
                 TextField("", text: $cashReceived)
                   .placeholder(when: cashReceived.isEmpty, alignment: .trailing) {
-                    Text("\(profileVM.currencySymbol) 0.00").foregroundColor(.white.opacity(0.5))
+                    Text("\(profileVM.currencySymbol) 0.00").foregroundColor(secondaryTextColor)
                   }
                   .currencyInput(text: $cashReceived)
                   .multilineTextAlignment(.trailing)
-                  .foregroundColor(.white)
+                  .foregroundColor(textColor)
                   .font(.title3)
               }
-              .listRowBackground(Color.white.opacity(0.2))
+              .listRowBackground(cardBackground)
 
               if !cashReceived.isEmpty {
                 HStack {
@@ -104,30 +102,30 @@ struct CheckoutView: View {
                     .fontWeight(.bold)
                     .foregroundColor(.marketGreen)
                 }
-                .listRowBackground(Color.white.opacity(0.2))
+                .listRowBackground(cardBackground)
               }
             }
 
             TextField("", text: $notes)
               .placeholder(when: notes.isEmpty) {
-                Text("Notes").foregroundColor(.white.opacity(0.5))
+                Text("Notes").foregroundColor(secondaryTextColor)
               }
-              .listRowBackground(Color.white.opacity(0.2))
-              .foregroundColor(.white)
+              .listRowBackground(cardBackground)
+              .foregroundColor(textColor)
           }
 
           Section(
             header:
               HStack {
                 Text("Discount")
-                  .foregroundColor(.white)
+                  .foregroundColor(textColor)
                   .bold()
                 Spacer()
                 Button(action: {
                   isDiscountExpanded.toggle()
                 }) {
                   Image(systemName: isDiscountExpanded ? "minus.circle.fill" : "plus.circle.fill")
-                    .foregroundColor(.white)
+                    .foregroundColor(textColor)
                     .font(.title3)
                 }
               }
@@ -137,10 +135,10 @@ struct CheckoutView: View {
                 TextField("", text: $discountValue)
                   .placeholder(when: discountValue.isEmpty) {
                     Text("\(profileVM.currencySymbol) Discount").foregroundColor(
-                      .white.opacity(0.5))
+                      secondaryTextColor)
                   }
                   .currencyInput(text: $discountValue)
-                  .foregroundColor(.white)
+                  .foregroundColor(textColor)
 
                 Picker("Type", selection: $isPercentage) {
                   Text(profileVM.currencySymbol).tag(false)
@@ -149,7 +147,7 @@ struct CheckoutView: View {
                 .pickerStyle(SegmentedPickerStyle())
                 .frame(width: 100)
               }
-              .listRowBackground(Color.white.opacity(0.2))
+              .listRowBackground(cardBackground)
 
               if discountAmount > 0 {
                 HStack {
@@ -159,7 +157,7 @@ struct CheckoutView: View {
                   Text("- \(profileVM.currencySymbol) \(String(format: "%.2f", discountAmount))")
                     .foregroundColor(.marketGreen)
                 }
-                .listRowBackground(Color.white.opacity(0.2))
+                .listRowBackground(cardBackground)
               }
             }
           }
@@ -167,27 +165,27 @@ struct CheckoutView: View {
           Section {
             HStack {
               Text("Subtotal")
-                .foregroundColor(.white.opacity(0.9))
+                .foregroundColor(textColor.opacity(0.9))
                 .fontWeight(.medium)
               Spacer()
               Text("\(profileVM.currencySymbol) \(String(format: "%.2f", salesVM.cartTotal))")
-                .foregroundColor(.white.opacity(0.9))
+                .foregroundColor(textColor.opacity(0.9))
                 .fontWeight(.medium)
             }
-            .listRowBackground(Color.white.opacity(0.2))
+            .listRowBackground(cardBackground)
 
             HStack {
               Text("Total to Pay")
                 .font(Typography.title2)
                 .bold()
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
               Spacer()
               Text("\(profileVM.currencySymbol) \(String(format: "%.2f", finalTotal))")
                 .font(.system(size: 40, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
             }
             .padding(.vertical, 8)
-            .listRowBackground(Color.white.opacity(0.2))
+            .listRowBackground(cardBackground)
           }
         }
         .scrollContentBackground(.hidden)
@@ -196,10 +194,14 @@ struct CheckoutView: View {
           Text("Confirm Sale")
             .font(Typography.headline)
             .fontWeight(.semibold)
-            .foregroundColor(.black)
+            .foregroundColor(textColor)
             .frame(maxWidth: .infinity)
             .padding(Spacing.md)
-            .background(Color.white)
+            .background(cardBackground)
+            .overlay(
+              RoundedRectangle(cornerRadius: CornerRadius.xl)
+                .stroke(strokeColor, lineWidth: 1)
+            )
             .cornerRadius(CornerRadius.xl)
         }
         .padding(Spacing.md)

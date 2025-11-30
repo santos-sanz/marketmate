@@ -35,6 +35,31 @@ final class ThemeManager: ObservableObject {
 
   var secondaryTextColor: Color { Color(hex: textHex).opacity(0.72) }
 
+  var tertiaryTextColor: Color { Color(hex: textHex).opacity(0.42) }
+
+  var cardBackground: Color {
+    let delta: CGFloat = backgroundColor.isDark ? 0.16 : -0.08
+    return backgroundColor.adjusted(by: delta)
+  }
+
+  var elevatedCardBackground: Color {
+    let delta: CGFloat = backgroundColor.isDark ? 0.22 : -0.12
+    return backgroundColor.adjusted(by: delta)
+  }
+
+  var fieldBackground: Color {
+    let delta: CGFloat = backgroundColor.isDark ? 0.2 : -0.14
+    return backgroundColor.adjusted(by: delta)
+  }
+
+  var strokeColor: Color { primaryTextColor.opacity(0.12) }
+
+  var mutedStrokeColor: Color { primaryTextColor.opacity(0.08) }
+
+  var translucentOverlay: Color { primaryTextColor.opacity(0.06) }
+
+  var tabTint: Color { primaryTextColor }
+
   var primaryTextWeight: Font.Weight { .semibold }
 
   var secondaryTextWeight: Font.Weight { .medium }
@@ -62,6 +87,22 @@ final class ThemeManager: ObservableObject {
 }
 
 extension Color {
+  var isDark: Bool {
+    let uiColor = UIColor(self)
+    var red: CGFloat = 0
+    var green: CGFloat = 0
+    var blue: CGFloat = 0
+    var alpha: CGFloat = 0
+
+    guard uiColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha) else {
+      return false
+    }
+
+    // Perceived brightness calculation
+    let brightness = (red * 299 + green * 587 + blue * 114) / 1000
+    return brightness < 0.6
+  }
+
   func hexString() -> String? {
     let uiColor = UIColor(self)
     var red: CGFloat = 0

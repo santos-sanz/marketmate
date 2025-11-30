@@ -4,6 +4,7 @@ struct ProductDetailView: View {
   @EnvironmentObject var inventoryVM: InventoryViewModel
   @EnvironmentObject var profileVM: ProfileViewModel
   @Environment(\.presentationMode) var presentationMode
+  @EnvironmentObject var themeManager: ThemeManager
 
   let product: Product
 
@@ -14,6 +15,9 @@ struct ProductDetailView: View {
   @State private var editedCost: String
   @State private var editedStock: String
   @State private var showingDeleteAlert = false
+  private var textColor: Color { themeManager.primaryTextColor }
+  private var secondaryTextColor: Color { themeManager.secondaryTextColor }
+  private var cardBackground: Color { themeManager.cardBackground }
 
   init(product: Product) {
     self.product = product
@@ -29,94 +33,94 @@ struct ProductDetailView: View {
       Color.clear.revolutBackground()
 
       Form {
-        Section(header: Text("Product Information").foregroundColor(.marketTextSecondary)) {
+        Section(header: Text("Product Information").foregroundColor(secondaryTextColor)) {
           if isEditing {
             TextField("Name", text: $editedName)
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
             TextField("Description", text: $editedDescription)
-              .foregroundColor(.white)
+              .foregroundColor(textColor)
           } else {
             HStack {
               Text("Name")
-                .foregroundColor(.marketTextSecondary)
+                .foregroundColor(secondaryTextColor)
               Spacer()
               Text(product.name)
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
             }
             if let desc = product.description, !desc.isEmpty {
               HStack {
                 Text("Description")
-                  .foregroundColor(.marketTextSecondary)
+                  .foregroundColor(secondaryTextColor)
                 Spacer()
                 Text(desc)
-                  .foregroundColor(.white)
+                  .foregroundColor(textColor)
               }
             }
           }
         }
-        .listRowBackground(Color.marketCard)
+        .listRowBackground(cardBackground)
 
-        Section(header: Text("Pricing").foregroundColor(.marketTextSecondary)) {
+        Section(header: Text("Pricing").foregroundColor(secondaryTextColor)) {
           if isEditing {
             HStack {
               Text("Price")
-                .foregroundColor(.marketTextSecondary)
+                .foregroundColor(secondaryTextColor)
               Spacer()
               TextField("\(profileVM.currencySymbol) 0.00", text: $editedPrice)
                 .currencyInput(text: $editedPrice)
                 .multilineTextAlignment(.trailing)
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
             }
             HStack {
               Text("Cost")
-                .foregroundColor(.marketTextSecondary)
+                .foregroundColor(secondaryTextColor)
               Spacer()
               TextField("\(profileVM.currencySymbol) 0.00", text: $editedCost)
                 .currencyInput(text: $editedCost)
                 .multilineTextAlignment(.trailing)
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
             }
           } else {
             HStack {
               Text("Price")
-                .foregroundColor(.marketTextSecondary)
+                .foregroundColor(secondaryTextColor)
               Spacer()
               Text("\(profileVM.selectedCurrency) \(String(format: "%.2f", product.price))")
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
             }
             HStack {
               Text("Cost")
-                .foregroundColor(.marketTextSecondary)
+                .foregroundColor(secondaryTextColor)
               Spacer()
               Text("\(profileVM.selectedCurrency) \(String(format: "%.2f", product.cost ?? 0.0))")
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
             }
           }
         }
-        .listRowBackground(Color.marketCard)
+        .listRowBackground(cardBackground)
 
-        Section(header: Text("Inventory").foregroundColor(.marketTextSecondary)) {
+        Section(header: Text("Inventory").foregroundColor(secondaryTextColor)) {
           if isEditing {
             HStack {
               Text("Stock Quantity")
-                .foregroundColor(.marketTextSecondary)
+                .foregroundColor(secondaryTextColor)
               Spacer()
               TextField("0", text: $editedStock)
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.trailing)
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
             }
           } else {
             HStack {
               Text("Stock Quantity")
-                .foregroundColor(.marketTextSecondary)
+                .foregroundColor(secondaryTextColor)
               Spacer()
               Text("\(product.stockQuantity ?? 0)")
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
             }
           }
         }
-        .listRowBackground(Color.marketCard)
+        .listRowBackground(cardBackground)
 
         Section {
           Button(action: { showingDeleteAlert = true }) {
@@ -129,7 +133,7 @@ struct ProductDetailView: View {
             }
           }
         }
-        .listRowBackground(Color.marketCard)
+        .listRowBackground(cardBackground)
       }
       .scrollContentBackground(.hidden)
     }
@@ -141,12 +145,12 @@ struct ProductDetailView: View {
           Button("Save") {
             saveChanges()
           }
-          .foregroundColor(.white)
+          .foregroundColor(textColor)
         } else {
           Button("Edit") {
             isEditing = true
           }
-          .foregroundColor(.white)
+          .foregroundColor(textColor)
         }
       }
     }
