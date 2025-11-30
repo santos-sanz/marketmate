@@ -9,50 +9,51 @@ struct MainTabView: View {
   @State private var selectedTab = 0
 
   var body: some View {
-    TabView(selection: $selectedTab) {
-      NavigationStack {
-        HomeView()
-          .environmentObject(salesVM)
-          .environmentObject(costsVM)
-          .environmentObject(inventoryVM)
-      }
-      .tabItem {
-        Label("Home", systemImage: "house.fill")
-      }
-      .tag(0)
-
-      NavigationStack {
-        SalesView()
-          .environmentObject(salesVM)
-          .environmentObject(inventoryVM)
-          .environmentObject(costsVM)
-      }
-      .tabItem {
-        Label("Sales", systemImage: "tag.fill")
-      }
-      .tag(1)
-
-      if profileVM.useInventory {
+    ZStack(alignment: .bottom) {
+      TabView(selection: $selectedTab) {
         NavigationStack {
-          InventoryView()
+          HomeView()
+            .environmentObject(salesVM)
+            .environmentObject(costsVM)
             .environmentObject(inventoryVM)
         }
-        .tabItem {
-          Label("Inventory", systemImage: "cube.box.fill")
-        }
-        .tag(2)
-      }
+        .themedNavigationBars(themeManager)
+        .tag(0)
 
-      NavigationStack {
-        CostsView()
-          .environmentObject(costsVM)
+        NavigationStack {
+          SalesView()
+            .environmentObject(salesVM)
+            .environmentObject(inventoryVM)
+            .environmentObject(costsVM)
+        }
+        .themedNavigationBars(themeManager)
+        .tag(1)
+
+        if profileVM.useInventory {
+          NavigationStack {
+            InventoryView()
+              .environmentObject(inventoryVM)
+          }
+          .themedNavigationBars(themeManager)
+          .tag(2)
+        }
+
+        NavigationStack {
+          CostsView()
+            .environmentObject(costsVM)
+        }
+        .themedNavigationBars(themeManager)
+        .tag(3)
       }
-      .tabItem {
-        Label("Costs", systemImage: "arrow.down.circle.fill")
-      }
-      .tag(3)
+      .tint(themeManager.tabTint)
+
+      CustomTabBar(selectedTab: $selectedTab)
+        .padding(.bottom, 0)
     }
-    .tint(themeManager.tabTint)
+    .ignoresSafeArea(.keyboard)
+    .onAppear {
+      UITabBar.appearance().isHidden = true
+    }
     .onChange(of: profileVM.useInventory) { newValue in
       if !newValue, selectedTab == 2 {
         selectedTab = 0

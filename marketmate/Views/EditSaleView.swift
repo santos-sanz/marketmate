@@ -134,10 +134,11 @@ struct EditSaleView: View {
             dismiss()
           }
           .foregroundColor(secondaryTextColor)
-        }
       }
     }
+    .themedNavigationBars(themeManager)
   }
+}
 
   private func deleteItems(at offsets: IndexSet) {
     items.remove(atOffsets: offsets)

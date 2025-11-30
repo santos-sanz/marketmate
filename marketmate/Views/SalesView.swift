@@ -290,7 +290,7 @@ struct SalesView: View {
       VStack(alignment: .leading, spacing: 12) {
         Text("Amount")
           .font(Typography.caption1)
-          .foregroundColor(secondaryTextColor)
+          .foregroundColor(textColor)
 
         HStack(spacing: 12) {
           Text(profileVM.currencySymbol)
@@ -310,7 +310,7 @@ struct SalesView: View {
       HStack {
         Text("Quantity")
           .font(Typography.caption1)
-          .foregroundColor(secondaryTextColor)
+          .foregroundColor(textColor)
 
         Spacer()
 
@@ -341,7 +341,7 @@ struct SalesView: View {
       VStack(alignment: .leading, spacing: 8) {
         Text("Label")
           .font(Typography.caption1)
-          .foregroundColor(secondaryTextColor)
+          .foregroundColor(textColor)
 
         TextField("e.g. Custom service, donation, tip", text: $customDescription)
           .foregroundColor(textColor)
@@ -361,7 +361,8 @@ struct SalesView: View {
         .frame(maxWidth: .infinity)
         .padding()
         .background(
-          (canAddCustomAmount ? themeManager.primaryTextColor.opacity(0.16)
+          (canAddCustomAmount
+            ? themeManager.primaryTextColor.opacity(0.16)
             : themeManager.primaryTextColor.opacity(0.08))
         )
         .cornerRadius(CornerRadius.sm)

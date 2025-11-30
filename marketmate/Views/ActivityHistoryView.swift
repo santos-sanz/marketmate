@@ -194,6 +194,7 @@ struct ActivityHistoryView: View {
         }
       }
     }
+    .themedNavigationBars(themeManager)
   }
 }
 

@@ -126,6 +126,7 @@ struct CostsView: View {
             }
             .padding()
           }
+          .padding(.bottom, 80)
         }
       }
     }

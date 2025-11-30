@@ -135,6 +135,16 @@ extension View {
       .cornerRadius(CornerRadius.lg)
   }
 
+  func themedNavigationBars(_ themeManager: ThemeManager) -> some View {
+    let scheme: ColorScheme = themeManager.backgroundColor.isDark ? .dark : .light
+    return self
+      .toolbarBackground(themeManager.backgroundColor, for: .navigationBar)
+      .toolbarBackground(themeManager.backgroundColor, for: .tabBar)
+      .toolbarColorScheme(scheme, for: .navigationBar)
+      .toolbarColorScheme(scheme, for: .tabBar)
+      .tint(themeManager.primaryTextColor)
+  }
+
   func unifiedHeaderStyle() -> some View {
     self
       .padding(.horizontal, Spacing.md)

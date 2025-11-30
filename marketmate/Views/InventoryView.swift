@@ -157,6 +157,7 @@ struct InventoryView: View {
             }
             .padding()
           }
+          .padding(.bottom, 80)
         }
       }
     }

@@ -23,6 +23,7 @@ struct ContentView: View {
       }
     }
     .background(themeManager.backgroundColor.ignoresSafeArea())
+    .tint(themeManager.primaryTextColor)
     .preferredColorScheme(isDarkMode ? .dark : .light)
     .onChange(of: profileVM.themeBackgroundHex) { newValue in
       themeManager.apply(backgroundHex: newValue, textHex: profileVM.themeTextHex)

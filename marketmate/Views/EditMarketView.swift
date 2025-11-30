@@ -59,10 +59,11 @@ struct EditMarketView: View {
             dismiss()
           }
           .foregroundColor(secondaryTextColor)
-        }
       }
     }
+    .themedNavigationBars(themeManager)
   }
+}
 
   private func saveMarket() {
     Task {
