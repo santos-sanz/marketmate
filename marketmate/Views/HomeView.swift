@@ -127,7 +127,7 @@ struct HomeView: View {
       HStack(spacing: 30) {
         ActionButton(icon: "tag.fill", label: "Add Sale") { showingAddSale = true }
         ActionButton(icon: "arrow.down.circle.fill", label: "Add Cost") { showingAddCost = true }
-        ActionButton(icon: "list.bullet", label: "Details") { navigateToReports = true }
+
       }
     }
     .padding(.horizontal, Spacing.md)
